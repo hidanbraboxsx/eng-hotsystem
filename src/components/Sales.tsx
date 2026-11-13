@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Trash2,
   Wallet,
+  Zap,
 } from 'lucide-react';
 import type { AppState, Product, Purchase, PurchaseStatus } from '@shared/types';
 import { api } from '../lib/api';

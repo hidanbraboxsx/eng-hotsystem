@@ -50,7 +50,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import type { AppState, BotFunnelStageConfig, BotOperatingMode, MessageTemplate, TemplateCategory } from '@shared/types';
+import type { AppState, BotFunnelStageConfig, BotOperatingMode, MessageTemplate, Product, TemplateCategory } from '@shared/types';
 import { api } from '../lib/api';
 import { formatBRL, formatFullDate, formatNumber, relativeTime } from '../lib/format';
 import { Avatar } from './Avatar';
