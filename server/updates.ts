@@ -1,6 +1,7 @@
 import type { Lead, MessageLog } from '../shared/types.js';
 import { restartFollowUpForLead } from './followups.js';
 import { newId, store, type StoredBot } from './store.js';
+import { createCharge } from './purchases.js';
 import {
   getLocalizedConversationReply,
   getLocalizedHelp,
@@ -47,6 +48,57 @@ function renderWelcome(template: string, lead: Lead, bot: StoredBot): string {
     .replaceAll('{nome}', lead.name.split(' ')[0] || lead.name)
     .replaceAll('{username}', lead.username ? `@${lead.username}` : lead.name)
     .replaceAll('{bot}', bot.firstName);
+}
+
+function getDynamicBotMenu(
+  bot: StoredBot,
+  lead: Lead
+): { text: string; buttons: Array<{ text: string; callbackData?: string; url?: string }> } {
+  const allProducts = store.getPublicState().products || [];
+  const products = allProducts.filter((p) => p.active && (!p.botId || p.botId === bot.id));
+
+  if (products.length === 0) {
+    const botLang = normalizeLang(bot.language || lead.languageCode);
+    return getLocalizedMenu(botLang, lead.name, bot.firstName);
+  }
+
+  const lines = [
+    `🔥 *Planos VIP Exclusivos — ${bot.firstName}*`,
+    '',
+    `Escolha o seu plano abaixo e receba acesso IMEDIATO a todo o meu acervo sem censura:`,
+    '',
+  ];
+
+  const buttons: Array<{ text: string; callbackData?: string; url?: string }> = [];
+
+  products.forEach((prod, idx) => {
+    const valor = (prod.priceCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const tempo = prod.duration ? `(${prod.duration})` : '';
+    lines.push(`${idx + 1}️⃣ *${prod.name}* ${tempo}: ${valor}`);
+
+    const icon =
+      prod.buttonColor === 'purple'
+        ? '👑'
+        : prod.buttonColor === 'rose'
+        ? '💋'
+        : prod.buttonColor === 'amber'
+        ? '⭐'
+        : prod.buttonColor === 'blue'
+        ? '🔷'
+        : prod.buttonColor === 'lime'
+        ? '⚡'
+        : '💎';
+
+    buttons.push({
+      text: `${icon} ${prod.name} ${tempo} por ${valor}`,
+      callbackData: `buy_${prod.id}`,
+    });
+  });
+
+  lines.push('');
+  lines.push(`👇 *Clique no botão abaixo para gerar o PIX oficial instantâneo:*`);
+
+  return { text: lines.join('\n'), buttons };
 }
 
 function logOutbound(
@@ -298,9 +350,66 @@ async function processTelegramUpdateInner(botId: string, update: TelegramUpdate)
       } else if (query.data === 'check_vip_access' || query.data === 'vip') {
         void checkAndDeliverVipAccess(bot, token, lead, true);
       } else if (query.data === 'menu' || query.data === 'planos') {
-        const botLang = normalizeLang(bot.language || lead.languageCode);
-        const menuMsg = getLocalizedMenu(botLang, lead.name, bot.firstName);
+        const menuMsg = getDynamicBotMenu(bot, lead);
         void replyToLead(bot, token, lead, menuMsg.text, menuMsg.buttons);
+      } else if (query.data?.startsWith('buy_')) {
+        const prodId = query.data.replace('buy_', '');
+        const product = store.findProduct(prodId);
+        if (!product || !product.active) {
+          void replyToLead(bot, token, lead, 'Desculpe, este plano não está mais disponível no momento.');
+        } else {
+          try {
+            const charge = await createCharge({
+              botId: bot.id,
+              leadId: lead.id,
+              productId: product.id,
+              customerName: lead.name,
+            });
+            const valorFormatado = (product.priceCents / 100).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            });
+            const pixMsg =
+              `💎 *PIX Gerado com Sucesso! — ${product.name}*\n\n` +
+              `💰 *Valor:* ${valorFormatado}\n` +
+              `⏱️ *Tempo de Acesso:* ${product.duration || '30 dias'}\n\n` +
+              `Copie o código PIX Copia e Cola abaixo e pague no app do seu banco:\n\n` +
+              `\`${charge.pixCode}\`\n\n` +
+              `_Assim que o pagamento for aprovado pela SyncPay, seu acesso VIP será liberado automaticamente aqui na conversa!_ 🚀`;
+
+            const pixButtons = [
+              { text: '✅ Já Paguei! Liberar VIP', callbackData: 'check_vip_access' },
+              { text: '⬅️ Voltar aos Planos', callbackData: 'menu' },
+            ];
+            void replyToLead(bot, token, lead, pixMsg, pixButtons);
+          } catch (err) {
+            console.error('[updates] Falha ao gerar PIX SyncPay:', err);
+            if (product.pixCode) {
+              const valorFormatado = (product.priceCents / 100).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              });
+              const pixMsg =
+                `💎 *Plano Selecionado: ${product.name}*\n\n` +
+                `💰 *Valor:* ${valorFormatado}\n` +
+                `⏱️ *Tempo:* ${product.duration || '30 dias'}\n\n` +
+                `Chave PIX para pagamento:\n\n` +
+                `\`${product.pixCode}\`\n\n` +
+                `Envie o comprovante após pagar para liberar o acesso!`;
+              void replyToLead(bot, token, lead, pixMsg, [
+                { text: '✅ Já Paguei! Liberar VIP', callbackData: 'check_vip_access' },
+                { text: '⬅️ Voltar aos Planos', callbackData: 'menu' },
+              ]);
+            } else {
+              void replyToLead(
+                bot,
+                token,
+                lead,
+                `Instabilidade temporária ao gerar PIX: ${(err as Error).message}. Verifique a conexão com a SyncPay.`
+              );
+            }
+          }
+        }
       } else if (query.data === 'teaser_amostra') {
         const botLang = normalizeLang(bot.language || lead.languageCode);
         const teaserText =
@@ -489,7 +598,7 @@ async function processTelegramUpdateInner(botId: string, update: TelegramUpdate)
       }
     } else if (isMenu) {
       // Apresentação de Planos e Conteúdos VIP
-      const menuMsg = getLocalizedMenu(botLang, lead.name, bot.firstName);
+      const menuMsg = getDynamicBotMenu(bot, lead);
       await replyToLead(bot, token, lead, menuMsg.text, menuMsg.buttons);
     } else if (isHelp) {
       // Suporte e Ajuda

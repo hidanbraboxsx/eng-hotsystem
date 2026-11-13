@@ -28,6 +28,7 @@ import {
   MessageSquare,
   MousePointerClick,
   PhoneCall,
+  Pencil,
   Play,
   Plus,
   QrCode,
@@ -312,6 +313,29 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
       { text: 'MENSAL + BÔNUS por R$ 13.93 (30% OFF)', iconType: 'sparkles', primary: true },
       { text: '1 DIA NO PARAÍSO por R$ 6.93 (30% OFF)', iconType: 'flame', primary: false },
     ],
+  });
+
+  // Estados do Construtor Moderno de Planos com Sincronização SyncPay
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [planSaving, setPlanSaving] = useState(false);
+  const [planTestingSyncPay, setPlanTestingSyncPay] = useState<string | null>(null);
+  const [testPixResult, setTestPixResult] = useState<{
+    productName: string;
+    pixCode: string;
+    amount: string;
+  } | null>(null);
+
+  const [planForm, setPlanForm] = useState<{
+    name: string;
+    duration: string;
+    price: string;
+    buttonColor: 'emerald' | 'lime' | 'purple' | 'rose' | 'blue' | 'amber';
+  }>({
+    name: '1 Mês VIP Completo',
+    duration: '30 dias',
+    price: '19,90',
+    buttonColor: 'emerald',
   });
 
   const openBot = state.bots.find((bot) => bot.id === openBotId) || null;
@@ -604,6 +628,146 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
       notify('error', 'Erro ao disparar', err instanceof Error ? err.message : 'Falha na conexão com Telegram API.');
     }
   };
+
+  const handleOpenCreatePlan = () => {
+    setEditingPlanId(null);
+    setPlanForm({
+      name: '',
+      duration: '30 dias',
+      price: '19,90',
+      buttonColor: 'emerald',
+    });
+    setPlanModalOpen(true);
+  };
+
+  const handleOpenEditPlan = (prod: Product) => {
+    setEditingPlanId(prod.id);
+    const precoFormatado = (prod.priceCents / 100).toFixed(2).replace('.', ',');
+    setPlanForm({
+      name: prod.name,
+      duration: prod.duration || '30 dias',
+      price: precoFormatado,
+      buttonColor: (prod.buttonColor as any) || 'emerald',
+    });
+    setPlanModalOpen(true);
+  };
+
+  const handleSavePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planForm.name.trim()) {
+      notify('error', 'Título Obrigatório', 'Informe o título do plano.');
+      return;
+    }
+    const cleanPrice = parseFloat(planForm.price.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    if (isNaN(cleanPrice) || cleanPrice <= 0) {
+      notify('error', 'Valor Inválido', 'Informe um valor válido em reais (ex: 19,90).');
+      return;
+    }
+    const priceCents = Math.round(cleanPrice * 100);
+
+    setPlanSaving(true);
+    try {
+      if (editingPlanId) {
+        await api.updateProduct(editingPlanId, {
+          name: planForm.name.trim(),
+          duration: planForm.duration.trim() || '30 dias',
+          buttonColor: planForm.buttonColor,
+          priceCents,
+          botId: openBot?.id || null,
+        });
+        notify('success', 'Plano Atualizado', 'Plano e sincronização com a SyncPay atualizados!');
+      } else {
+        await api.createProduct({
+          name: planForm.name.trim(),
+          duration: planForm.duration.trim() || '30 dias',
+          buttonColor: planForm.buttonColor,
+          priceCents,
+          botId: openBot?.id || null,
+          active: true,
+        });
+        notify('success', 'Plano Criado com Sucesso!', 'Plano sincronizado e pronto para gerar PIX automático.');
+      }
+      setPlanModalOpen(false);
+      await refresh();
+    } catch (err) {
+      notify('error', 'Erro ao Salvar Plano', err instanceof Error ? err.message : 'Falha na requisição.');
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const handleTogglePlanActive = async (prod: Product) => {
+    try {
+      await api.updateProduct(prod.id, { active: !prod.active });
+      notify('info', prod.active ? 'Plano Pausado' : 'Plano Ativado', `O plano "${prod.name}" foi atualizado.`);
+      await refresh();
+    } catch (err) {
+      notify('error', 'Erro', err instanceof Error ? err.message : 'Falha ao atualizar.');
+    }
+  };
+
+  const handleDeletePlan = async (prod: Product) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o plano "${prod.name}"?`)) return;
+    try {
+      await api.deleteProduct(prod.id);
+      notify('success', 'Plano Excluído', `"${prod.name}" foi removido.`);
+      await refresh();
+    } catch (err) {
+      notify('error', 'Erro ao excluir', err instanceof Error ? err.message : 'Falha ao remover.');
+    }
+  };
+
+  const handleTestPlanSyncPay = async (prod: Product) => {
+    if (!openBot) return;
+    setPlanTestingSyncPay(prod.id);
+    try {
+      const res = await api.createCharge({
+        botId: openBot.id,
+        productId: prod.id,
+        customerName: 'Teste Oficial Admin SyncPay',
+      });
+      setTestPixResult({
+        productName: prod.name,
+        pixCode: res.pixCode,
+        amount: (prod.priceCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      });
+      notify('success', 'SyncPay Conectada 100%!', 'Chave PIX oficial gerada com sucesso pela API!');
+    } catch (err) {
+      notify(
+        'error',
+        'Falha no teste SyncPay',
+        `A API da SyncPay respondeu: ${err instanceof Error ? err.message : 'Erro de conexão'}. Verifique as credenciais no painel.`
+      );
+    } finally {
+      setPlanTestingSyncPay(null);
+    }
+  };
+
+  const handleLoadDefaultPlans = async () => {
+    if (!openBot) return;
+    setPlanSaving(false);
+    try {
+      const defaults = [
+        { name: '1 Dia no Paraíso 😈', duration: '1 dia', priceCents: 990, buttonColor: 'lime' },
+        { name: 'Acesso Mensal VIP + Bônus 🎁', duration: '30 dias', priceCents: 1990, buttonColor: 'emerald' },
+        { name: 'Vitalício + Chamada de Vídeo ☎️', duration: 'Vitalício', priceCents: 3990, buttonColor: 'purple' },
+      ];
+      for (const d of defaults) {
+        await api.createProduct({
+          ...d,
+          botId: openBot.id,
+          active: true,
+        });
+      }
+      notify('success', 'Planos Criados!', '3 planos de alta conversão sincronizados com a SyncPay.');
+      await refresh();
+    } catch (err) {
+      notify('error', 'Erro ao gerar planos', err instanceof Error ? err.message : 'Falha na requisição.');
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
   const webhookBase = state.server.publicBaseUrl || state.settings.publicBaseUrl;
   const botChats = useMemo(
     () => (openBot ? state.chats.filter((chat) => chat.botId === openBot.id) : []),
@@ -1475,44 +1639,204 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#232d3d] bg-[#10141d] p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                {/* Bloco de Planos VIP com Sincronização SyncPay Automática */}
+                <div className="rounded-2xl border border-[#232d3d] bg-[#10141d] p-4 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#21293a] pb-3">
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-                        Planos e Preços Disponíveis ({state.products.length})
-                      </h3>
-                      <p className="text-[11px] text-[#718096]">
-                        Estes planos são oferecidos no comando /menu e nos botões de checkout.
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-[#d4f933]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+                          Planos de Acesso VIP & Checkout Automático
+                        </h3>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" /> SyncPay Integrada
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-[#718096]">
+                        Crie planos informando apenas <strong className="text-white">Título</strong>, <strong className="text-white">Tempo</strong>, <strong className="text-white">Valor</strong> e <strong className="text-white">Cor do Botão</strong>. A SyncPay gera o PIX dinâmico e valida pagamentos automaticamente.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpenBotId(null);
-                        onNavigate('vendas');
-                      }}
-                      className="btn-ghost text-xs text-[#d4f933] hover:underline"
-                    >
-                      Gerenciar na Aba Vendas →
-                    </button>
-                  </div>
-                  {state.products.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-[#293246] p-4 text-center text-xs text-[#718096]">
-                      Nenhum produto cadastrado ainda. Crie planos e assinaturas na aba Vendas.
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleOpenCreatePlan}
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-md shadow-[#d4f933]/15 font-bold"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Criar Novo Plano
+                      </button>
                     </div>
-                  ) : (
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      {state.products.map((prod) => (
-                        <div key={prod.id} className="rounded-xl border border-[#252e3f] bg-[#0d1017] p-3">
-                          <div className="text-xs font-bold text-white truncate">{prod.name}</div>
-                          <div className="mt-1 flex items-center justify-between">
-                            <span className="mono text-xs font-bold text-[#d4f933]">{formatBRL(prod.priceCents)}</span>
-                            <span className="text-[10px] text-[#718096]">{prod.active ? 'Ativo' : 'Inativo'}</span>
+                  </div>
+
+                  {(() => {
+                    const botProducts = state.products.filter(
+                      (p) => !p.botId || p.botId === openBot.id
+                    );
+
+                    if (botProducts.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#293246] p-8 text-center bg-[#0a0d13]">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-300 mb-3">
+                            <Sparkles className="h-6 w-6" />
+                          </div>
+                          <h4 className="text-sm font-bold text-white">Nenhum plano cadastrado para este bot</h4>
+                          <p className="mt-1 max-w-sm text-xs text-[#718096]">
+                            Crie planos rápidos ou clique abaixo para carregar os 3 modelos de alta conversão recomendados.
+                          </p>
+                          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleOpenCreatePlan}
+                              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Criar Meu Primeiro Plano
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleLoadDefaultPlans}
+                              disabled={planSaving}
+                              className="btn-secondary text-xs py-2 px-4 flex items-center gap-1.5 text-purple-300 border-purple-500/30 hover:bg-purple-500/15"
+                            >
+                              {planSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                              Carregar 3 Planos Recomendados (Alta Conversão)
+                            </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    }
+
+                    const COLOR_BADGES: Record<string, { label: string; bg: string; text: string; ring: string }> = {
+                      emerald: { label: 'Verde Esmeralda', bg: 'bg-[#10b981]', text: 'text-white', ring: 'ring-emerald-500/30' },
+                      lime: { label: 'Verde Neon', bg: 'bg-[#d4f933]', text: 'text-black', ring: 'ring-[#d4f933]/40' },
+                      purple: { label: 'Roxo VIP', bg: 'bg-[#8b5cf6]', text: 'text-white', ring: 'ring-purple-500/30' },
+                      rose: { label: 'Rosa Sedutor', bg: 'bg-[#ec4899]', text: 'text-white', ring: 'ring-pink-500/30' },
+                      blue: { label: 'Azul Celeste', bg: 'bg-[#3b82f6]', text: 'text-white', ring: 'ring-blue-500/30' },
+                      amber: { label: 'Âmbar Dourado', bg: 'bg-[#f59e0b]', text: 'text-black', ring: 'ring-amber-500/30' },
+                    };
+
+                    return (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {botProducts.map((prod) => {
+                          const colorKey = prod.buttonColor || 'emerald';
+                          const colorCfg = COLOR_BADGES[colorKey] || COLOR_BADGES.emerald;
+                          const precoReais = (prod.priceCents / 100).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          });
+
+                          return (
+                            <div
+                              key={prod.id}
+                              className={`relative flex flex-col justify-between rounded-2xl border p-4 transition-all duration-200 ${
+                                prod.active
+                                  ? 'border-[#263143] bg-[#0d1017] hover:border-[#38465d] shadow-lg'
+                                  : 'border-[#1b222e] bg-[#0a0c10] opacity-60'
+                              }`}
+                            >
+                              <div className="space-y-2.5">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-bold text-white truncate" title={prod.name}>
+                                        {prod.name}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-[#161d2a] px-2 py-0.5 text-[10px] font-semibold text-[#8b9bb2]">
+                                        <Clock className="h-2.5 w-2.5 text-[#d4f933]" /> {prod.duration || '30 dias'}
+                                      </span>
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400">
+                                        ⚡ SyncPay
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <span
+                                    className={`badge shrink-0 text-[9px] font-extrabold ${
+                                      prod.active
+                                        ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+                                        : 'border-slate-700 bg-slate-800 text-slate-400'
+                                    }`}
+                                  >
+                                    {prod.active ? 'Ativo' : 'Pausado'}
+                                  </span>
+                                </div>
+
+                                {/* Valor em Destaque */}
+                                <div className="rounded-xl border border-white/5 bg-[#121622] p-2.5">
+                                  <span className="text-[10px] text-[#78879e]">Valor de Venda PIX:</span>
+                                  <div className="mono text-lg font-black text-[#d4f933]">
+                                    {precoReais}
+                                  </div>
+                                </div>
+
+                                {/* Preview do Botão no Telegram com a Cor Selecionada */}
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-semibold uppercase tracking-wider text-[#6a778c]">
+                                    Prévia no Telegram:
+                                  </span>
+                                  <div
+                                    className={`w-full text-center rounded-xl py-2 px-3 text-[11px] font-bold shadow-md transition ${colorCfg.bg} ${colorCfg.text} truncate`}
+                                  >
+                                    💎 {prod.name} ({prod.duration || '30 dias'}) por {precoReais}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Ações do Card */}
+                              <div className="mt-3.5 flex items-center justify-between gap-1.5 border-t border-[#1c2433] pt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTestPlanSyncPay(prod)}
+                                  disabled={planTestingSyncPay === prod.id}
+                                  className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 text-emerald-300 hover:text-emerald-200 border-emerald-500/30 hover:border-emerald-500/50"
+                                  title="Gera uma cobrança PIX real pela API da SyncPay agora para comprovar"
+                                >
+                                  {planTestingSyncPay === prod.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Zap className="h-3 w-3 text-emerald-400" />
+                                  )}
+                                  Testar PIX
+                                </button>
+
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditPlan(prod)}
+                                    className="rounded-lg p-1.5 text-[#8897ae] hover:bg-[#1b2332] hover:text-white transition"
+                                    title="Editar Plano"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTogglePlanActive(prod)}
+                                    className="rounded-lg p-1.5 text-[#8897ae] hover:bg-[#1b2332] hover:text-white transition"
+                                    title={prod.active ? 'Pausar Plano' : 'Ativar Plano'}
+                                  >
+                                    {prod.active ? (
+                                      <EyeOff className="h-3.5 w-3.5 text-amber-400" />
+                                    ) : (
+                                      <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeletePlan(prod)}
+                                    className="rounded-lg p-1.5 text-[#8897ae] hover:bg-rose-500/10 hover:text-rose-400 transition"
+                                    title="Excluir Plano"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -2618,6 +2942,245 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
           </div>
         )}
       </Modal>
+
+      {/* Modal Avançado e Moderno de Criação / Edição de Plano VIP */}
+      <Modal
+        open={planModalOpen}
+        onClose={() => setPlanModalOpen(false)}
+        title={editingPlanId ? 'Editar Plano VIP' : 'Criar Novo Plano VIP'}
+        description="Defina os 4 parâmetros essenciais. O checkout e o PIX dinâmico são integrados automaticamente com a SyncPay."
+        size="md"
+      >
+        <form onSubmit={handleSavePlan} className="space-y-4">
+          {/* 1. Título do Plano */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-white flex items-center justify-between">
+              <span>1. Título do Plano</span>
+              <span className="text-[10px] text-[#718096] font-normal">Exibido na mensagem do bot</span>
+            </label>
+            <input
+              value={planForm.name}
+              onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+              placeholder="Ex: Acesso Mensal VIP + Bônus"
+              className="input text-xs"
+              required
+            />
+          </div>
+
+          {/* 2. Tempo / Duração do Acesso */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-white flex items-center justify-between">
+              <span>2. Tempo de Acesso / Duração</span>
+              <span className="text-[10px] text-[#718096] font-normal">Validade do benefício</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                '1 dia',
+                '3 dias',
+                '7 dias',
+                '15 dias',
+                '30 dias (Mensal)',
+                '90 dias (Trimestral)',
+                'Vitalício',
+              ].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setPlanForm({ ...planForm, duration: d })}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    planForm.duration === d
+                      ? 'bg-[#d4f933] text-black font-bold shadow'
+                      : 'border border-[#263143] bg-[#0c1017] text-[#8696ab] hover:border-[#3a495f] hover:text-white'
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+            <input
+              value={planForm.duration}
+              onChange={(e) => setPlanForm({ ...planForm, duration: e.target.value })}
+              placeholder="Personalizado (ex: 45 dias)"
+              className="input text-xs"
+              required
+            />
+          </div>
+
+          {/* 3. Valor do Plano */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-white flex items-center justify-between">
+              <span>3. Valor do Plano (R$)</span>
+              <span className="text-[10px] text-[#718096] font-normal">Preço cobrado via PIX</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {['9,90', '14,90', '19,90', '29,90', '39,90', '49,90', '97,00'].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setPlanForm({ ...planForm, price: val })}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    planForm.price === val
+                      ? 'bg-emerald-500 text-white font-bold shadow'
+                      : 'border border-[#263143] bg-[#0c1017] text-[#8696ab] hover:border-[#3a495f] hover:text-white'
+                  }`}
+                >
+                  R$ {val}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#718096]">R$</span>
+              <input
+                value={planForm.price}
+                onChange={(e) => setPlanForm({ ...planForm, price: e.target.value })}
+                placeholder="19,90"
+                className="input pl-8 mono text-xs font-bold text-white"
+                required
+              />
+            </div>
+          </div>
+
+          {/* 4. Cor do Botão no Telegram */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-white">
+              4. Cor do Botão no Telegram
+            </label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                { id: 'emerald', label: 'Verde Esmeralda', bg: 'bg-[#10b981]', border: 'border-emerald-500' },
+                { id: 'lime', label: 'Verde Neon', bg: 'bg-[#d4f933]', border: 'border-[#d4f933]' },
+                { id: 'purple', label: 'Roxo VIP', bg: 'bg-[#8b5cf6]', border: 'border-purple-500' },
+                { id: 'rose', label: 'Rosa Sedutor', bg: 'bg-[#ec4899]', border: 'border-pink-500' },
+                { id: 'blue', label: 'Azul Celeste', bg: 'bg-[#3b82f6]', border: 'border-blue-500' },
+                { id: 'amber', label: 'Âmbar Ouro', bg: 'bg-[#f59e0b]', border: 'border-amber-500' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setPlanForm({ ...planForm, buttonColor: c.id as any })}
+                  className={`flex items-center gap-2 rounded-xl border p-2.5 text-xs font-semibold transition ${
+                    planForm.buttonColor === c.id
+                      ? 'border-[#d4f933] bg-[#d4f933]/15 text-white ring-2 ring-[#d4f933]/30'
+                      : 'border-[#222c3c] bg-[#0c1017] text-[#7d8ea5] hover:border-[#334259]'
+                  }`}
+                >
+                  <span className={`h-3 w-3 rounded-full ${c.bg} shadow-sm shrink-0`} />
+                  <span className="truncate">{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Prévia ao Vivo do Botão no Telegram */}
+          <div className="rounded-xl border border-white/10 bg-[#0a0d13] p-3 space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#79889f]">
+              Prévia do Botão no Telegram:
+            </span>
+            {(() => {
+              const bgClass =
+                planForm.buttonColor === 'lime'
+                  ? 'bg-[#d4f933] text-black font-extrabold shadow-lg shadow-[#d4f933]/20'
+                  : planForm.buttonColor === 'purple'
+                  ? 'bg-[#8b5cf6] text-white font-bold shadow-lg shadow-purple-500/20'
+                  : planForm.buttonColor === 'rose'
+                  ? 'bg-[#ec4899] text-white font-bold shadow-lg shadow-pink-500/20'
+                  : planForm.buttonColor === 'blue'
+                  ? 'bg-[#3b82f6] text-white font-bold shadow-lg shadow-blue-500/20'
+                  : planForm.buttonColor === 'amber'
+                  ? 'bg-[#f59e0b] text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'bg-[#10b981] text-white font-bold shadow-lg shadow-emerald-500/20';
+
+              return (
+                <div className={`w-full text-center py-2.5 px-3 rounded-xl text-xs ${bgClass} truncate`}>
+                  💎 {planForm.name || 'Nome do Plano'} ({planForm.duration || '30 dias'}) por R$ {planForm.price || '0,00'}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Aviso Informativo da Sincronização SyncPay */}
+          <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200">
+            <Zap className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed">
+              <strong className="text-white">Sincronização 100% Automática:</strong> A chave PIX dinâmica com identificador único, QR Code e validação instantânea de pagamento é gerada diretamente pela API da SyncPay no checkout de cada lead.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-[#20293a] pt-3">
+            <button
+              type="button"
+              onClick={() => setPlanModalOpen(false)}
+              className="btn-secondary text-xs"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={planSaving}
+              className="btn-primary text-xs flex items-center gap-1.5"
+            >
+              {planSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              {editingPlanId ? 'Salvar Alterações' : 'Criar & Sincronizar Plano'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de Confirmação do Teste PIX SyncPay */}
+      {testPixResult && (
+        <Modal
+          open={Boolean(testPixResult)}
+          onClose={() => setTestPixResult(null)}
+          title="⚡ Teste PIX SyncPay Aprovado com Sucesso!"
+          description={`Cobrança gerada pela API oficial da SyncPay para o plano "${testPixResult.productName}".`}
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 mb-2">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <h4 className="text-sm font-bold text-white">Chave PIX Oficial Gerada</h4>
+              <p className="mt-0.5 text-xs text-emerald-200">
+                Valor: <strong className="text-white">{testPixResult.amount}</strong>
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#79889f]">
+                Código PIX Copia e Cola (SyncPay API):
+              </label>
+              <div className="rounded-xl border border-[#263143] bg-[#0c1017] p-3">
+                <textarea
+                  readOnly
+                  value={testPixResult.pixCode}
+                  className="w-full bg-transparent text-xs mono text-emerald-300 resize-none outline-none no-scrollbar h-24"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-[#20293a] pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(testPixResult.pixCode);
+                  notify('success', 'Código Copiado!', 'Código PIX copiado para a área de transferência.');
+                }}
+                className="btn-primary text-xs flex items-center gap-1.5"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copiar Código PIX
+              </button>
+              <button
+                type="button"
+                onClick={() => setTestPixResult(null)}
+                className="btn-secondary text-xs"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Editor & Criador Completo de Modelos de Mensagem com Imagens, Vídeos, GIFs e Botões */}
       <MessageTemplateBuilder

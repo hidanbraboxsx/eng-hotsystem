@@ -89,7 +89,9 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState({
     name: '',
-    price: '7,90',
+    duration: '30 dias',
+    buttonColor: 'emerald',
+    price: '19,90',
     pixCode: '',
     checkoutUrl: '',
     deliveryText: '',
@@ -182,7 +184,16 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
 
   const openNewProduct = () => {
     setEditingProduct(null);
-    setProductForm({ name: '', price: '7,90', pixCode: '', checkoutUrl: '', deliveryText: '', active: true });
+    setProductForm({
+      name: '',
+      duration: '30 dias',
+      buttonColor: 'emerald',
+      price: '19,90',
+      pixCode: '',
+      checkoutUrl: '',
+      deliveryText: '',
+      active: true,
+    });
     setProductOpen(true);
   };
 
@@ -190,6 +201,8 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
     setEditingProduct(product);
     setProductForm({
       name: product.name,
+      duration: product.duration || '30 dias',
+      buttonColor: product.buttonColor || 'emerald',
       price: priceInput(product.priceCents),
       pixCode: product.pixCode || '',
       checkoutUrl: product.checkoutUrl || '',
@@ -210,6 +223,8 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
     try {
       const payload = {
         name: productForm.name.trim(),
+        duration: productForm.duration.trim() || '30 dias',
+        buttonColor: productForm.buttonColor,
         priceCents,
         pixCode: productForm.pixCode.trim() || null,
         checkoutUrl: productForm.checkoutUrl.trim() || null,
@@ -218,7 +233,7 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
       };
       if (editingProduct) await api.updateProduct(editingProduct.id, payload);
       else await api.createProduct(payload);
-      notify('success', editingProduct ? 'Produto atualizado' : 'Produto criado', payload.name);
+      notify('success', editingProduct ? 'Plano atualizado' : 'Plano criado', payload.name);
       setProductOpen(false);
       await refresh();
     } catch (error) {
@@ -735,72 +750,123 @@ export function Sales({ state, selectedBotId, refresh }: SalesProps) {
       <Modal
         open={productOpen}
         onClose={() => setProductOpen(false)}
-        title={editingProduct ? 'Editar produto' : 'Novo produto'}
-        description="O código PIX abaixo é o que os modelos enviam em {pix}."
+        title={editingProduct ? 'Editar Plano VIP' : 'Novo Plano VIP'}
+        description="Defina os 4 parâmetros essenciais. O PIX dinâmico e validações são sincronizados automaticamente com a SyncPay."
         footer={
           <>
             <button type="button" onClick={() => setProductOpen(false)} className="btn-secondary text-xs">Cancelar</button>
-            <button type="submit" form="product-form" disabled={busy === 'product'} className="btn-primary text-xs">
+            <button type="submit" form="product-form" disabled={busy === 'product'} className="btn-primary text-xs flex items-center gap-1.5">
               {busy === 'product' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              Salvar
+              Salvar Plano
             </button>
           </>
         }
       >
-        <form id="product-form" onSubmit={saveProduct} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
-            <div>
-              <label className="label" htmlFor="prod-name">Nome</label>
-              <input
-                id="prod-name"
-                className="input"
-                value={productForm.name}
-                onChange={(event) => setProductForm({ ...productForm, name: event.target.value })}
-                placeholder="Ex.: Acesso vitalício"
-                required
-              />
+        <form id="product-form" onSubmit={saveProduct} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="label" htmlFor="prod-name">1. Título do Plano</label>
+            <input
+              id="prod-name"
+              className="input text-xs"
+              value={productForm.name}
+              onChange={(event) => setProductForm({ ...productForm, name: event.target.value })}
+              placeholder="Ex: Acesso Mensal VIP + Bônus"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="label">2. Tempo de Acesso / Duração</label>
+            <div className="flex flex-wrap gap-1.5">
+              {['1 dia', '3 dias', '7 dias', '15 dias', '30 dias (Mensal)', '90 dias', 'Vitalício'].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setProductForm({ ...productForm, duration: d })}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    productForm.duration === d
+                      ? 'bg-[#d4f933] text-black font-bold shadow'
+                      : 'border border-[#263143] bg-[#0c1017] text-[#8696ab] hover:border-[#3a495f] hover:text-white'
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="label" htmlFor="prod-price">Preço (R$)</label>
+            <input
+              className="input text-xs"
+              value={productForm.duration}
+              onChange={(event) => setProductForm({ ...productForm, duration: event.target.value })}
+              placeholder="30 dias"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="label" htmlFor="prod-price">3. Valor do Plano (R$)</label>
+            <div className="flex flex-wrap gap-1.5">
+              {['9,90', '14,90', '19,90', '29,90', '39,90', '49,90'].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setProductForm({ ...productForm, price: val })}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    productForm.price === val
+                      ? 'bg-emerald-500 text-white font-bold shadow'
+                      : 'border border-[#263143] bg-[#0c1017] text-[#8696ab] hover:border-[#3a495f] hover:text-white'
+                  }`}
+                >
+                  R$ {val}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#718096]">R$</span>
               <input
                 id="prod-price"
-                className="input"
+                className="input pl-8 mono text-xs font-bold text-white"
                 value={productForm.price}
                 onChange={(event) => setProductForm({ ...productForm, price: event.target.value })}
-                placeholder="7,90"
+                placeholder="19,90"
                 required
               />
             </div>
           </div>
-          <div>
-            <label className="label" htmlFor="prod-pix">Código PIX copia e cola</label>
-            <textarea
-              id="prod-pix"
-              className="input min-h-20 resize-y font-mono text-[11px]"
-              value={productForm.pixCode}
-              onChange={(event) => setProductForm({ ...productForm, pixCode: event.target.value })}
-              placeholder="00020126..."
-            />
+
+          <div className="space-y-2">
+            <label className="label">4. Cor do Botão no Telegram</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'emerald', label: 'Verde Esmeralda', bg: 'bg-[#10b981]' },
+                { id: 'lime', label: 'Verde Neon', bg: 'bg-[#d4f933]' },
+                { id: 'purple', label: 'Roxo VIP', bg: 'bg-[#8b5cf6]' },
+                { id: 'rose', label: 'Rosa Sedutor', bg: 'bg-[#ec4899]' },
+                { id: 'blue', label: 'Azul Celeste', bg: 'bg-[#3b82f6]' },
+                { id: 'amber', label: 'Âmbar Ouro', bg: 'bg-[#f59e0b]' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setProductForm({ ...productForm, buttonColor: c.id })}
+                  className={`flex items-center gap-2 rounded-xl border p-2 text-xs font-semibold transition ${
+                    productForm.buttonColor === c.id
+                      ? 'border-[#d4f933] bg-[#d4f933]/15 text-white ring-2 ring-[#d4f933]/30'
+                      : 'border-[#222c3c] bg-[#0c1017] text-[#7d8ea5] hover:border-[#334259]'
+                  }`}
+                >
+                  <span className={`h-2.5 w-2.5 rounded-full ${c.bg} shrink-0`} />
+                  <span className="truncate text-[11px]">{c.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <label className="label" htmlFor="prod-link">Link de checkout (opcional)</label>
-            <input
-              id="prod-link"
-              className="input"
-              value={productForm.checkoutUrl}
-              onChange={(event) => setProductForm({ ...productForm, checkoutUrl: event.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="prod-delivery">Mensagem de entrega</label>
-            <textarea
-              id="prod-delivery"
-              className="input min-h-24 resize-y"
-              value={productForm.deliveryText}
-              onChange={(event) => setProductForm({ ...productForm, deliveryText: event.target.value })}
-              placeholder="✅ Pagamento aprovado, {nome}! Seu acesso: {link}"
-            />
+
+          {/* Sincronização SyncPay */}
+          <div className="flex items-start gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200">
+            <Zap className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed">
+              <strong className="text-white">SyncPay Automática:</strong> O PIX dinâmico Copia e Cola e QR Code são gerados e validados automaticamente pela API oficial da SyncPay no checkout de cada lead sem necessidade de colar código estático manual.
+            </p>
           </div>
         </form>
       </Modal>

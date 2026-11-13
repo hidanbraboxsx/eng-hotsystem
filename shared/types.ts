@@ -236,6 +236,9 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  duration?: string;
+  buttonColor?: string;
+  botId?: string | null;
   priceCents: number;
   currency: 'BRL';
   pixCode: string | null;
@@ -508,6 +511,9 @@ export interface CreateSequenceInput {
 export interface CreateProductInput {
   name: string;
   description?: string;
+  duration?: string;
+  buttonColor?: string;
+  botId?: string | null;
   priceCents: number;
   pixCode?: string | null;
   checkoutUrl?: string | null;

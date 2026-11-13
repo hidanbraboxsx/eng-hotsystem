@@ -436,10 +436,13 @@ export function registerAdminRoutes(app: Express): void {
     })
   );
 
-  // Produtos
+  // Produtos / Planos Modernos
   const productSchema = z.object({
-    name: z.string().trim().min(1, 'Informe o nome do produto.').max(80),
+    name: z.string().trim().min(1, 'Informe o nome do plano.').max(80),
     description: z.string().trim().max(500).optional(),
+    duration: z.string().trim().max(60).optional(),
+    buttonColor: z.string().trim().max(40).optional(),
+    botId: z.string().trim().nullable().optional(),
     priceCents: z.number().int().min(100, 'Preço mínimo de R$ 1,00.').max(100_000_000),
     pixCode: z.string().trim().max(1_500).nullable().optional(),
     checkoutUrl: z.string().trim().url().nullable().optional(),
@@ -455,6 +458,9 @@ export function registerAdminRoutes(app: Express): void {
       id: newId('prod'),
       name: parsed.data.name,
       description: parsed.data.description || '',
+      duration: parsed.data.duration || '30 dias',
+      buttonColor: parsed.data.buttonColor || 'emerald',
+      botId: parsed.data.botId || null,
       priceCents: parsed.data.priceCents,
       currency: 'BRL',
       pixCode: parsed.data.pixCode || null,
