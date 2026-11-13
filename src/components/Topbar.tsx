@@ -120,60 +120,78 @@ export function Topbar({
 
           <div className="flex shrink-0 items-center gap-2">
             {/* Botão de Instalação PWA no Celular / Atalho Área de Trabalho */}
-            <button
-              type="button"
-              onClick={() => setPwaModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-[#293246] bg-[#121722] px-2.5 py-1.5 text-xs font-semibold text-[#c8d3e6] transition hover:border-[#d4f933] hover:text-[#d4f933] sm:px-3 sm:py-2"
-              title="Criar atalho na tela inicial do celular ou instalar app"
-            >
-              <Smartphone className="h-3.5 w-3.5 text-[#d4f933]" />
-              <span className="hidden sm:inline">
-                {isInstalled ? 'App no Celular' : 'Instalar no Celular'}
-              </span>
-              <span className="sm:hidden">App</span>
-            </button>
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={() => setPwaModalOpen(true)}
+                aria-label="Instalar app ou criar atalho na tela inicial"
+                className="flex items-center gap-1.5 rounded-xl border border-[#293246] bg-[#121722] px-2.5 py-1.5 text-xs font-semibold text-[#c8d3e6] transition hover:border-[#d4f933] hover:text-[#d4f933] sm:px-3 sm:py-2 select-none"
+              >
+                <Smartphone className="h-3.5 w-3.5 text-[#d4f933]" />
+                <span className="hidden sm:inline">
+                  {isInstalled ? 'App no Celular' : 'Instalar no Celular'}
+                </span>
+                <span className="sm:hidden">App</span>
+              </button>
+              <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-xl border border-[#2b3548] bg-[#0c1017]/95 px-3 py-1.5 text-[11px] font-semibold text-white shadow-2xl backdrop-blur-md select-none group-hover:block">
+                <span>Criar atalho na tela inicial do celular ou instalar app</span>
+                <div className="absolute -top-1 right-4 h-2 w-2 rotate-45 border-l border-t border-[#2b3548] bg-[#0c1017]" />
+              </div>
+            </div>
 
             {/* Botão de Sino de Notificações na Tela */}
-            <button
-              type="button"
-              onClick={handleBellClick}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition sm:h-10 sm:w-10 ${
-                pushActive
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                  : 'border-[#293246] bg-[#121722] text-[#6f7d94] hover:text-white'
-              }`}
-              title={
-                pushActive
-                  ? 'Notificações na Tela do Aparelho: Ativadas. Clique para testar ou configurar.'
-                  : 'Notificações na Tela: Clique para ativar alertas de vendas no seu celular.'
-              }
-            >
-              <Bell className="h-4 w-4" />
-              {pushActive && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
-              )}
-            </button>
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={handleBellClick}
+                aria-label="Notificações na tela do aparelho"
+                className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition sm:h-10 sm:w-10 select-none ${
+                  pushActive
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                    : 'border-[#293246] bg-[#121722] text-[#6f7d94] hover:text-white'
+                }`}
+              >
+                <Bell className="h-4 w-4" />
+                {pushActive && (
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                )}
+              </button>
+              <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-xl border border-[#2b3548] bg-[#0c1017]/95 px-3 py-1.5 text-[11px] font-semibold text-white shadow-2xl backdrop-blur-md select-none group-hover:block">
+                <span>
+                  {pushActive
+                    ? 'Notificações na Tela: Ativadas (Clique para testar)'
+                    : 'Notificações na Tela: Clique para ativar alertas no celular'}
+                </span>
+                <div className="absolute -top-1 right-3.5 h-2 w-2 rotate-45 border-l border-t border-[#2b3548] bg-[#0c1017]" />
+              </div>
+            </div>
 
             {/* Botão de Alternar Som de Venda (Caixa Registradora / PIX) */}
-            <button
-              type="button"
-              onClick={handleToggleSound}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition sm:h-10 sm:w-10 ${
-                soundActive
-                  ? 'border-[#d4f933]/40 bg-[#d4f933]/15 text-[#d4f933]'
-                  : 'border-[#293246] bg-[#121722] text-[#6f7d94] hover:text-white'
-              }`}
-              title={
-                soundActive
-                  ? 'Som de Vendas: ATIVADO. Clique para silenciar o som.'
-                  : 'Som de Vendas: SILENCIADO. Clique para ativar a sineta de compras.'
-              }
-            >
-              {soundActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-              {soundActive && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#d4f933] shadow-[0_0_8px_#d4f933]" />
-              )}
-            </button>
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={handleToggleSound}
+                aria-label="Alternar som de confirmação de venda"
+                className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition sm:h-10 sm:w-10 select-none ${
+                  soundActive
+                    ? 'border-[#d4f933]/40 bg-[#d4f933]/15 text-[#d4f933]'
+                    : 'border-[#293246] bg-[#121722] text-[#6f7d94] hover:text-white'
+                }`}
+              >
+                {soundActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                {soundActive && (
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#d4f933] shadow-[0_0_8px_#d4f933]" />
+                )}
+              </button>
+              <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-xl border border-[#2b3548] bg-[#0c1017]/95 px-3 py-1.5 text-[11px] font-semibold text-white shadow-2xl backdrop-blur-md select-none group-hover:block">
+                <span>
+                  {soundActive
+                    ? 'Som de Vendas: ATIVADO (Clique para silenciar)'
+                    : 'Som de Vendas: SILENCIADO (Clique para ativar a sineta)'}
+                </span>
+                <div className="absolute -top-1 right-3.5 h-2 w-2 rotate-45 border-l border-t border-[#2b3548] bg-[#0c1017]" />
+              </div>
+            </div>
 
             {bots.length > 0 && (
               <div className="relative block">
@@ -201,16 +219,22 @@ export function Topbar({
               </span>
             )}
 
-            <button
-              type="button"
-              onClick={onSync}
-              disabled={syncing || bots.length === 0}
-              className="btn-secondary h-10 px-3 text-xs"
-              title={lastSync ? `Última sincronização: ${relativeTime(lastSync)}` : 'Sincronizar agora'}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{syncing ? 'Sincronizando' : 'Sincronizar'}</span>
-            </button>
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={onSync}
+                disabled={syncing || bots.length === 0}
+                aria-label="Sincronizar agora"
+                className="btn-secondary h-10 px-3 text-xs select-none"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{syncing ? 'Sincronizando' : 'Sincronizar'}</span>
+              </button>
+              <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-xl border border-[#2b3548] bg-[#0c1017]/95 px-3 py-1.5 text-[11px] font-semibold text-white shadow-2xl backdrop-blur-md select-none group-hover:block">
+                <span>{lastSync ? `Última sincronização: ${relativeTime(lastSync)}` : 'Sincronizar agora'}</span>
+                <div className="absolute -top-1 right-4 h-2 w-2 rotate-45 border-l border-t border-[#2b3548] bg-[#0c1017]" />
+              </div>
+            </div>
           </div>
         </div>
       </header>

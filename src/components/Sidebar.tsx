@@ -60,11 +60,11 @@ export function Sidebar({ activeTab, onChange, newLeads }: SidebarProps) {
                 key={item.id}
                 type="button"
                 onClick={() => onChange(item.id)}
-                title={item.label}
+                aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
-                className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl transition ${
+                className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl select-none transition-all duration-200 ${
                   active
-                    ? 'bg-[#d4f933] text-[#080a0e] shadow-lg shadow-[#d4f933]/15'
+                    ? 'bg-[#d4f933] text-[#080a0e] shadow-lg shadow-[#d4f933]/20 ring-2 ring-[#d4f933]/30'
                     : 'text-[#738096] hover:bg-[#171c27] hover:text-white'
                 }`}
               >
@@ -72,9 +72,17 @@ export function Sidebar({ activeTab, onChange, newLeads }: SidebarProps) {
                 {item.id === 'leads' && newLeads > 0 && !active && (
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#d4f933]" />
                 )}
-                <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-lg border border-[#2b3447] bg-[#161b25] px-2.5 py-1 text-xs font-medium text-white shadow-xl group-hover:block">
-                  {item.label}
-                </span>
+                {/* Tooltip com identidade visual refinada: sem colisão de title nativo, centralizado e com caret */}
+                <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-xl border border-[#2b3548] bg-[#0c1017]/95 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md select-none opacity-0 scale-95 transition-all duration-150 group-hover:opacity-100 group-hover:scale-100">
+                  <div className="flex items-center gap-1.5">
+                    <span>{item.label}</span>
+                    {active && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#d4f933] shadow-[0_0_6px_#d4f933]" />
+                    )}
+                  </div>
+                  {/* Seta / Caret sutil apontando para o ícone */}
+                  <div className="absolute right-full top-1/2 -mr-[1px] -translate-y-1/2 border-4 border-transparent border-r-[#2b3548]" />
+                </div>
               </button>
             );
           })}
