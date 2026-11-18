@@ -3069,10 +3069,18 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                               </div>
                             )}
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              Oie meu anjo! 💋 Que delícia ter você aqui comigo! Preparei conteúdos muito exclusivos e vídeos que eu jamais postaria no Instagram aberto...
+                              {openBot.language === 'en'
+                                ? `Hey there handsome! 💋 So glad you reached out! I'm ${openBot.firstName}, and I've prepared this private, unfiltered vault just for us...`
+                                : openBot.language === 'es'
+                                ? `¡Hola mi amor! 💋 Qué rico tenerte aquí conmigo... Soy ${openBot.firstName}, y preparé este rincón íntimo y sin censura sólo para los dos...`
+                                : `Oie meu anjo! 💋 Que delícia ter você aqui comigo! Sou a ${openBot.firstName}, e preparei conteúdos muito exclusivos e vídeos que eu jamais postaria no Instagram aberto...`}
                             </p>
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              O que você quer ver primeiro?
+                              {openBot.language === 'en'
+                                ? 'What would you like to see first?'
+                                : openBot.language === 'es'
+                                ? '¿Qué te gustaría ver primero?'
+                                : 'O que você quer ver primeiro?'}
                             </p>
                             <div className="space-y-1.5 pt-1">
                               <button
@@ -3080,14 +3088,16 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 onClick={() => setSimStep(2)}
                                 className="w-full rounded-xl bg-[#203246] hover:bg-[#283e57] text-[#e1ebf5] py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
                               >
-                                <Flame className="h-3.5 w-3.5 text-amber-400" /> Quero Ver Prévia Grátis
+                                <Flame className="h-3.5 w-3.5 text-amber-400" />
+                                <span>{openBot.language === 'en' ? 'Watch Free Preview' : openBot.language === 'es' ? 'Ver Muestra Gratis' : 'Quero Ver Prévia Grátis'}</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setSimStep(3)}
                                 className="w-full rounded-xl bg-[#3b7c3d] hover:bg-[#438f46] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
                               >
-                                <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> Ver Planos VIP &amp; Preços
+                                <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" />
+                                <span>{openBot.language === 'en' ? 'See VIP Plans & Pricing' : openBot.language === 'es' ? 'Ver Planes VIP y Precios' : 'Ver Planos VIP & Preços'}</span>
                               </button>
                             </div>
                             <span className="block text-right text-[9px] font-mono text-[#708499]">19:42 ✓✓</span>
@@ -3104,7 +3114,9 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between text-[10px] text-[#90a8c2]">
-                                  <span className="font-bold text-white">Áudio Proibido na Cama</span>
+                                  <span className="font-bold text-white">
+                                    {openBot.language === 'en' ? 'Forbidden Bed Audio' : openBot.language === 'es' ? 'Audio Prohibido en la Cama' : 'Áudio Proibido na Cama'}
+                                  </span>
                                   <span>0:42</span>
                                 </div>
                                 <div className="mt-1 h-1.5 w-full rounded-full bg-[#203246] overflow-hidden">
@@ -3114,7 +3126,11 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                             </div>
 
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              Gravei esse áudio tocando meu corpo todinho enquanto pensava em você... Mas o vídeo completo sem tarja tá liberado só no meu VIP!
+                              {openBot.language === 'en'
+                                ? "I recorded this audio touching my body thinking about you... But the full uncensored video is only inside my VIP vault!"
+                                : openBot.language === 'es'
+                                ? "Grabé este audio tocándome todita pensando en ti... ¡Pero el video completo sin censura está en mi VIP!"
+                                : "Gravei esse áudio tocando meu corpo todinho enquanto pensava em você... Mas o vídeo completo sem tarja tá liberado só no meu VIP!"}
                             </p>
                             <div className="space-y-1.5 pt-1">
                               <button
@@ -3122,14 +3138,15 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 onClick={() => setSimStep(3)}
                                 className="w-full rounded-xl bg-[#a33232] hover:bg-[#b83838] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
                               >
-                                <Sparkles className="h-3.5 w-3.5" /> Destravar Vídeo Sem Tarja Agora
+                                <Sparkles className="h-3.5 w-3.5" />
+                                <span>{openBot.language === 'en' ? 'Unlock Uncensored Video Now' : openBot.language === 'es' ? 'Desbloquear Video Sin Censura' : 'Destravar Vídeo Sem Tarja Agora'}</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setSimStep(1)}
                                 className="w-full text-center text-[10px] text-[#708499] hover:text-white pt-1"
                               >
-                                ← Voltar ao início
+                                {openBot.language === 'en' ? '← Back to start' : openBot.language === 'es' ? '← Volver al inicio' : '← Voltar ao início'}
                               </button>
                             </div>
                             <span className="block text-right text-[9px] font-mono text-[#708499]">19:44 ✓✓</span>
@@ -3155,9 +3172,13 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                             </div>
 
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              🔥 <strong>PLANOS DE ACESSO VIP LIBERADOS:</strong>
+                              🔥 <strong>{openBot.language === 'en' ? 'VIP MEMBERSHIP PLANS UNLOCKED:' : openBot.language === 'es' ? 'PLANES DE ACCESO VIP LIBERADOS:' : 'PLANOS DE ACESSO VIP LIBERADOS:'}</strong>
                               <br />
-                              Acesso imediato a todos os vídeos proibidos, chamadas e grupo secreto. Escolha seu plano com liberação automática:
+                              {openBot.language === 'en'
+                                ? 'Instant access to 300+ full HD clips, video calls, and secret vault. Choose your access pass:'
+                                : openBot.language === 'es'
+                                ? 'Acceso inmediato a todos los videos sin censura, videollamadas y grupo privado. Elige tu plan:'
+                                : 'Acesso imediato a todos os vídeos proibidos, chamadas e grupo secreto. Escolha seu plano com liberação automática:'}
                             </p>
 
                             {/* Botões dos Planos Reais */}
@@ -3179,7 +3200,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                     >
                                       <span>💎 {prod.name} ({prod.duration || '30 dias'})</span>
                                       <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">
-                                        {formatBRL(prod.priceCents)}
+                                        {openBot.language === 'en' ? `$ ${(prod.priceCents / 100 / 5).toFixed(2)}` : formatBRL(prod.priceCents)}
                                       </span>
                                     </button>
                                   ));
@@ -3194,8 +3215,8 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                       }}
                                       className="w-full rounded-xl bg-[#3b7c3d] hover:bg-[#438f46] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-between"
                                     >
-                                      <span>💎 VIP MENSAL (30 dias)</span>
-                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">R$ 19,90</span>
+                                      <span>💎 {openBot.language === 'en' ? 'MONTHLY VIP PASS (30 days)' : openBot.language === 'es' ? 'PASE VIP MENSUAL (30 días)' : 'VIP MENSAL (30 dias)'}</span>
+                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">{openBot.language === 'en' ? '$ 4.90' : 'R$ 19,90'}</span>
                                     </button>
                                     <button
                                       type="button"
@@ -3205,8 +3226,8 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                       }}
                                       className="w-full rounded-xl bg-[#5b3c88] hover:bg-[#6b479e] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-between"
                                     >
-                                      <span>👑 VITALÍCIO + BÔNUS DM</span>
-                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">R$ 47,00</span>
+                                      <span>👑 {openBot.language === 'en' ? 'LIFETIME + CALLS' : openBot.language === 'es' ? 'VITALICIO + LLAMADAS' : 'VITALÍCIO + BÔNUS DM'}</span>
+                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">{openBot.language === 'en' ? '$ 9.90' : 'R$ 47,00'}</span>
                                     </button>
                                   </>
                                 );
@@ -3221,15 +3242,19 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                           <div className="space-y-2 rounded-2xl rounded-tl-sm border border-emerald-500/30 bg-[#142328] p-3 shadow-md">
                             <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
                               <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1">
-                                <QrCode className="h-3.5 w-3.5" /> PIX Dinâmico Gerado
+                                <QrCode className="h-3.5 w-3.5" /> {openBot.language === 'en' ? 'Instant Payment (SyncPay / Card / PIX)' : openBot.language === 'es' ? 'Pago Instantáneo SyncPay' : 'PIX Dinâmico Gerado'}
                               </span>
                               <span className="font-mono text-[10px] font-bold text-amber-300 animate-pulse">
-                                ⏳ Expira em 14:59
+                                ⏳ {openBot.language === 'en' ? 'Expires in 14:59' : openBot.language === 'es' ? 'Expira en 14:59' : 'Expira em 14:59'}
                               </span>
                             </div>
 
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              Copie a chave PIX abaixo ou aponte a câmera do seu banco. A liberação do Canal VIP é 100% instantânea via SyncPay:
+                              {openBot.language === 'en'
+                                ? 'Copy payment code below or scan QR code with your mobile app. Instant access is verified by SyncPay:'
+                                : openBot.language === 'es'
+                                ? 'Copia el código abajo o escanea con tu app bancaria. La entrega es inmediata con SyncPay:'
+                                : 'Copie a chave PIX abaixo ou aponte a câmera do seu banco. A liberação do Canal VIP é 100% instantânea via SyncPay:'}
                             </p>
 
                             {/* Caixa do Código PIX Copia e Cola */}
@@ -3241,13 +3266,15 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 type="button"
                                 onClick={() => {
                                   setSimPixCopied(true);
-                                  notify('success', 'Chave PIX Copiada!', 'Código Copia e Cola pronto para colar no banco.');
+                                  notify('success', 'Chave Copiada!', 'Código pronto para colar no banco.');
                                   setTimeout(() => setSimPixCopied(false), 2500);
                                 }}
                                 className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-1.5 px-2 text-[11px] font-bold transition flex items-center justify-center gap-1.5"
                               >
                                 {simPixCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                                {simPixCopied ? 'Chave PIX Copiada!' : 'Copiar Código PIX'}
+                                {simPixCopied
+                                  ? (openBot.language === 'en' ? 'Code Copied!' : openBot.language === 'es' ? '¡Código Copiado!' : 'Chave PIX Copiada!')
+                                  : (openBot.language === 'en' ? 'Copy Payment Code' : openBot.language === 'es' ? 'Copiar Código de Pago' : 'Copiar Código PIX')}
                               </button>
                             </div>
 
@@ -3258,11 +3285,11 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 onClick={() => {
                                   setSimPixPaid(true);
                                   setSimStep(5);
-                                  notify('success', 'Pagamento Confirmado!', 'Webhook SyncPay validou o PIX. Canal liberado!');
+                                  notify('success', 'Pagamento Confirmado!', 'Webhook SyncPay validou o acesso com sucesso.');
                                 }}
                                 className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-[#d4f933] text-black font-extrabold py-2 px-3 text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-1.5"
                               >
-                                <CheckCheck className="h-4 w-4" /> Simular Pagamento Aprovado
+                                <CheckCheck className="h-4 w-4" /> {openBot.language === 'en' ? 'Simulate Payment Approved' : openBot.language === 'es' ? 'Simular Pago Aprobado' : 'Simular Pagamento Aprovado'}
                               </button>
                             </div>
                             <span className="block text-right text-[9px] font-mono text-[#708499]">19:46 ✓✓</span>
@@ -3273,10 +3300,14 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         {simStep === 5 && (
                           <div className="space-y-2 rounded-2xl rounded-tl-sm border border-purple-500/30 bg-[#1c142b] p-3 shadow-md">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#d4f933]">
-                              <ShieldCheck className="h-4 w-4" /> Pagamento Confirmado com Sucesso!
+                              <ShieldCheck className="h-4 w-4" /> {openBot.language === 'en' ? 'Payment Successfully Approved!' : openBot.language === 'es' ? '¡Pago Aprobado con Éxito!' : 'Pagamento Confirmado com Sucesso!'}
                             </div>
                             <p className="text-xs text-[#e1ebf5] leading-relaxed">
-                              Seja muito bem-vindo ao meu paraíso secreto! 💋 Seu link de acesso exclusivo e de uso único foi gerado pelo sistema anti-vazamento:
+                              {openBot.language === 'en'
+                                ? `Welcome to my private paradise! 💋 Your single-use access link was safely generated:`
+                                : openBot.language === 'es'
+                                ? `¡Bienvenido a mi paraíso secreto! 💋 Tu enlace exclusivo de un solo uso fue generado:`
+                                : `Seja muito bem-vindo ao meu paraíso secreto! 💋 Seu link de acesso exclusivo e de uso único foi gerado pelo sistema anti-vazamento:`}
                             </p>
                             <div className="space-y-1.5 pt-1">
                               <button
@@ -3284,7 +3315,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 onClick={() => notify('info', 'Link VIP Seguro', 'Este link de convite expira após 1 uso único.')}
                                 className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white py-2.5 px-3 text-xs font-extrabold shadow-md shadow-purple-600/30 transition flex items-center justify-center gap-2"
                               >
-                                <ExternalLink className="h-3.5 w-3.5" /> ENTRAR NO CANAL VIP AGORA
+                                <ExternalLink className="h-3.5 w-3.5" /> {openBot.language === 'en' ? 'ENTER PRIVATE VIP CHANNEL NOW' : openBot.language === 'es' ? 'ENTRAR AL CANAL VIP AHORA' : 'ENTRAR NO CANAL VIP AGORA'}
                               </button>
                               <button
                                 type="button"
@@ -3295,7 +3326,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 }}
                                 className="w-full text-center text-[10px] text-purple-300 hover:text-white pt-1"
                               >
-                                🔄 Reiniciar Teste do Início
+                                🔄 {openBot.language === 'en' ? 'Restart Funnel Test' : openBot.language === 'es' ? 'Reiniciar Prueba' : 'Reiniciar Teste do Início'}
                               </button>
                             </div>
                             <span className="block text-right text-[9px] font-mono text-[#708499]">19:47 ✓✓</span>

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Play,
   Plus,
+  RefreshCw,
   Send,
   Sparkles,
   Trash2,
@@ -488,7 +489,19 @@ export function Messages({
   // Sincronização inteligente com o idioma de cadastro do Bot
   useEffect(() => {
     if (bot?.language && (bot.language === 'pt' || bot.language === 'en' || bot.language === 'es')) {
-      setTemplateLang(bot.language as LanguageCode);
+      const targetLang = bot.language as LanguageCode;
+      setTemplateLang(targetLang);
+      const tpls = TEMPLATES_BY_LANG[targetLang] || TEMPLATES_BY_LANG.pt;
+      if (tpls && tpls[0]) {
+        const botName = bot.firstName || (bot.username ? `@${bot.username}` : 'Modelo');
+        setText(tpls[0].text.replaceAll('{nome_bot}', botName));
+        setButtons(
+          tpls[0].buttons.map((b) => ({
+            ...b,
+            text: b.text.replaceAll('{nome_bot}', botName),
+          }))
+        );
+      }
     }
   }, [bot?.id, bot?.language]);
 
@@ -628,6 +641,44 @@ export function Messages({
       setMediaGrid([]);
     }
     notify('info', 'Estratégia aplicada', `${tpl.name}`);
+  };
+
+  const switchLanguage = async (newLang: LanguageCode, syncToBot = false) => {
+    setTemplateLang(newLang);
+    const tpls = TEMPLATES_BY_LANG[newLang] || TEMPLATES_BY_LANG.pt;
+    const matching = (selectedCategory !== 'Todos'
+      ? tpls.find((t) => t.category === selectedCategory)
+      : null) || tpls[0];
+
+    if (matching) {
+      const botName = getBotDisplayName();
+      setText(matching.text.replaceAll('{nome_bot}', botName));
+      setButtons(
+        matching.buttons.map((b) => ({
+          ...b,
+          text: b.text.replaceAll('{nome_bot}', botName),
+        }))
+      );
+      if ('mediaMode' in matching && matching.mediaMode === 'grid' && matching.mediaGrid) {
+        setMediaMode('grid');
+        setMediaGrid([...matching.mediaGrid]);
+      } else {
+        setMediaMode('single');
+        setMediaGrid([]);
+      }
+    }
+
+    if (syncToBot && bot && bot.language !== newLang) {
+      try {
+        await api.updateBot(bot.id, { language: newLang });
+        await refresh();
+        notify('success', 'Bot & Mensagens Sincronizados!', `@${bot.username} agora opera oficialmente em ${newLang.toUpperCase()}.`);
+      } catch (e) {
+        notify('error', 'Falha ao sincronizar bot', e instanceof Error ? e.message : 'Tente novamente.');
+      }
+    } else {
+      notify('info', `Modelos em ${newLang.toUpperCase()} Carregados`, `Textos, botões e prévias traduzidos.`);
+    }
   };
 
   const insertTag = (tag: string) => {
@@ -902,12 +953,24 @@ export function Messages({
               <Flame className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">Estratégias & Modelos de Conversão</span>
-                <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                  <Sparkles className="h-2.5 w-2.5" />
-                  Sincronizado {bot ? `@${bot.username}` : ''}
-                </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-white">Estratégias &amp; Modelos de Conversão</span>
+                {isLangSyncedWithBot ? (
+                  <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    100% Sincronizado {bot ? `@${bot.username} (${templateLang.toUpperCase()})` : ''}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => switchLanguage(templateLang, true)}
+                    className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 hover:bg-amber-500/30 transition animate-pulse"
+                    title={`Clique para sincronizar o idioma oficial do bot @${bot?.username} para ${templateLang.toUpperCase()}`}
+                  >
+                    <RefreshCw className="h-2.5 w-2.5" />
+                    Sincronizar @{bot?.username} para {templateLang.toUpperCase()}
+                  </button>
+                )}
               </div>
               <p className="text-[11px] text-[#7d8ca4]">
                 Modelos de alta conversão adaptados em tempo real com o nome da modelo ({getBotDisplayName()})
@@ -930,16 +993,13 @@ export function Messages({
                 <button
                   key={lang.code}
                   type="button"
-                  onClick={() => {
-                    setTemplateLang(lang.code);
-                    notify('info', `Modelos em ${lang.name}`, `Carregando estratégias no idioma ${lang.label}.`);
-                  }}
+                  onClick={() => switchLanguage(lang.code, false)}
                   className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
                     active
                       ? 'bg-[#d4f933] text-black shadow'
                       : 'text-[#8596ab] hover:bg-[#151c27] hover:text-white'
                   }`}
-                  title={`Ver modelos em ${lang.name}`}
+                  title={`Carregar modelos e traduzir em ${lang.name}`}
                 >
                   {lang.flag}
                   <span>{lang.label}</span>
@@ -1018,7 +1078,14 @@ export function Messages({
                   <select
                     id="message-bot"
                     value={botId}
-                    onChange={(event) => setBotId(event.target.value)}
+                    onChange={(event) => {
+                      const nextId = event.target.value;
+                      setBotId(nextId);
+                      const targetBot = state.bots.find((b) => b.id === nextId);
+                      if (targetBot?.language && (targetBot.language === 'pt' || targetBot.language === 'en' || targetBot.language === 'es')) {
+                        switchLanguage(targetBot.language as LanguageCode, false);
+                      }
+                    }}
                     className="input font-semibold"
                   >
                     {state.bots.map((item) => (

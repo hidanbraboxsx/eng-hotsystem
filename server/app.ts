@@ -63,9 +63,22 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '7d' }));
 app.use((req, res, next) => {
+  // Blindagem contra scanners, path traversal e invasões automatizadas
+  const p = req.path.toLowerCase();
+  if (
+    p.includes('/.') ||
+    p.includes('..') ||
+    /\.(env|git|svn|htaccess|aws|ssh|config|bak|sql)$/i.test(p) ||
+    /(wp-admin|wp-login|xmlrpc|phpmyadmin|pma|actuator|eval|console|solr|cgi-bin|debug|vendor)/i.test(p)
+  ) {
+    return res.status(403).json({ error: 'Acesso negado pelo firewall do sistema.' });
+  }
+
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
@@ -130,11 +143,11 @@ function allowLogin(ip: string): boolean {
   const now = Date.now();
   const record = loginAttempts.get(ip);
   if (!record || record.resetAt < now) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + 10 * 60_000 });
+    loginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60_000 });
     return true;
   }
   record.count += 1;
-  return record.count <= 10;
+  return record.count <= 5;
 }
 
 const connectAttempts = new Map<string, { count: number; resetAt: number }>();
