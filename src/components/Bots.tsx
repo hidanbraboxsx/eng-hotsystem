@@ -61,6 +61,7 @@ import { FlagBrasil, FlagEspanha, FlagUSA, LanguageSelector, type LanguageCode }
 import type { NavTab } from '../lib/nav';
 import { MessageTemplateBuilder } from './MessageTemplateBuilder';
 import { MessageTemplateCard } from './MessageTemplateCard';
+import { SmartImageInput } from './SmartImageInput';
 
 function IconTikTok({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   return (
@@ -338,6 +339,13 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
     buttonColor: 'emerald',
   });
 
+  // Estados de Mídias do Funil de Upsell
+  const [upsellMediaWelcome, setUpsellMediaWelcome] = useState<string>('');
+  const [upsellMediaMain, setUpsellMediaMain] = useState<string>('');
+  const [upsellMediaType, setUpsellMediaType] = useState<'photo' | 'video' | 'animation'>('photo');
+  const [upsellMediaGrid, setUpsellMediaGrid] = useState<'main-left' | 'top-right' | 'bottom-right' | 'auto'>('main-left');
+  const [savingUpsellMedia, setSavingUpsellMedia] = useState(false);
+
   const openBot = state.bots.find((bot) => bot.id === openBotId) || null;
 
   useEffect(() => {
@@ -377,6 +385,11 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
             }
           : null
       );
+      // Sincroniza mídias upsell
+      setUpsellMediaWelcome((openBot as any).upsellMediaWelcome || '');
+      setUpsellMediaMain((openBot as any).upsellMediaMain || '');
+      setUpsellMediaType(((openBot as any).upsellMediaType as any) || 'photo');
+      setUpsellMediaGrid(((openBot as any).upsellMediaGrid as any) || 'main-left');
     }
   }, [
     openBot?.id,
@@ -389,6 +402,8 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
     openBot?.previewScheduleMode,
     openBot?.previewScheduleIntervalHours,
     openBot?.previewScheduleHours,
+    (openBot as any)?.upsellMediaWelcome,
+    (openBot as any)?.upsellMediaMain,
   ]);
 
   const handleToggleFunnelStage = async (stageId: string) => {
@@ -765,6 +780,25 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
       notify('error', 'Erro ao gerar planos', err instanceof Error ? err.message : 'Falha na requisição.');
     } finally {
       setPlanSaving(false);
+    }
+  };
+
+  const handleSaveUpsellMedia = async () => {
+    if (!openBot) return;
+    setSavingUpsellMedia(true);
+    try {
+      await api.updateBot(openBot.id, {
+        upsellMediaWelcome: upsellMediaWelcome.trim() || null,
+        upsellMediaMain: upsellMediaMain.trim() || null,
+        upsellMediaType,
+        upsellMediaGrid,
+      } as any);
+      notify('success', 'Mídias do Upsell Salvas! 🎬', 'As imagens e mídias do funil de conversão foram atualizadas com sucesso.');
+      await refresh();
+    } catch (err) {
+      notify('error', 'Erro ao Salvar Mídias', err instanceof Error ? err.message : 'Falha na requisição.');
+    } finally {
+      setSavingUpsellMedia(false);
     }
   };
 
@@ -1636,6 +1670,155 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Bloco de Mídias & Imagens das Mensagens do Funil */}
+                <div className="rounded-2xl border border-purple-500/20 bg-[#0f0d1a] p-4 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-purple-500/15 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/20 text-purple-300">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                          Mídias &amp; Imagens das Mensagens do Funil
+                        </h3>
+                        <p className="text-[11px] text-[#9a8ca8]">
+                          Configure as fotos, vídeos e GIFs enviados em cada etapa do funil de conversão.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSaveUpsellMedia}
+                      disabled={savingUpsellMedia}
+                      className="btn-primary bg-purple-600 hover:bg-purple-500 border-none text-xs font-bold px-3 py-1.5 shadow-md shadow-purple-600/20 inline-flex items-center gap-1.5"
+                    >
+                      {savingUpsellMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Salvar Mídias
+                    </button>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Mídia de Boas-Vindas */}
+                    <div className="space-y-3 rounded-xl border border-[#241e36] bg-[#0c0916] p-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500/20 text-[9px] font-extrabold text-purple-300">1</span>
+                        <span className="text-xs font-bold text-white">Mídia de Boas-Vindas (/start)</span>
+                        <span className="ml-auto rounded bg-[#d4f933]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#d4f933]">Foto ou Vídeo</span>
+                      </div>
+                      <p className="text-[10px] text-[#8575a0] leading-relaxed">
+                        Enviada automaticamente quando o lead inicia o bot. Cole a URL, arraste um arquivo ou pressione Ctrl+V.
+                      </p>
+                      <SmartImageInput
+                        label=""
+                        value={upsellMediaWelcome}
+                        onChange={setUpsellMediaWelcome}
+                        placeholder="Cole imagem (Ctrl+V), arraste ou insira URL da mídia..."
+                        aspectHint="Recomendado: foto vertical ou horizontal 16:9"
+                      />
+                      {upsellMediaWelcome && (
+                        <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-black/40 aspect-video">
+                          <img src={upsellMediaWelcome} alt="Preview" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="rounded-full bg-purple-500/20 px-2 py-1 text-[10px] font-bold text-purple-300 backdrop-blur border border-purple-500/30">Preview</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mídia Principal do Upsell */}
+                    <div className="space-y-3 rounded-xl border border-[#241e36] bg-[#0c0916] p-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500/20 text-[9px] font-extrabold text-purple-300">2</span>
+                        <span className="text-xs font-bold text-white">Mídia de Oferta &amp; Upsell</span>
+                        <span className="ml-auto rounded bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-bold text-purple-300">Multi-Mídia</span>
+                      </div>
+                      <p className="text-[10px] text-[#8575a0] leading-relaxed">
+                        Enviada na etapa de apresentação dos planos VIP. Escolha o tipo e posição no grid do Telegram.
+                      </p>
+
+                      {/* Seletor de Tipo de Mídia */}
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8575a0]">Tipo de Mídia:</span>
+                        <div className="flex gap-1.5">
+                          {([
+                            { id: 'photo' as const, label: '📷 Foto', icon: 'photo' },
+                            { id: 'video' as const, label: '🎬 Vídeo', icon: 'video' },
+                            { id: 'animation' as const, label: '🎞 GIF', icon: 'gif' },
+                          ] as const).map((t) => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setUpsellMediaType(t.id)}
+                              className={`flex-1 rounded-xl border py-1.5 px-2 text-[11px] font-bold transition ${
+                                upsellMediaType === t.id
+                                  ? 'border-purple-400 bg-purple-500/20 text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                                  : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/40'
+                              }`}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Seletor de Posição no Grid */}
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8575a0]">Posição no Grid do Telegram:</span>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {([
+                            { id: 'main-left' as const, label: '◧ Principal (Esq.)', desc: 'Imagem grande à esquerda' },
+                            { id: 'top-right' as const, label: '⊡ Topo Direito', desc: 'Miniatura superior direita' },
+                            { id: 'bottom-right' as const, label: '⊟ Baixo Direito', desc: 'Miniatura inferior direita' },
+                            { id: 'auto' as const, label: '⊞ Extra (Auto)', desc: 'Posição automática' },
+                          ] as const).map((pos) => (
+                            <button
+                              key={pos.id}
+                              type="button"
+                              onClick={() => setUpsellMediaGrid(pos.id)}
+                              className={`flex flex-col items-start gap-0.5 rounded-xl border p-2 text-left transition ${
+                                upsellMediaGrid === pos.id
+                                  ? 'border-purple-400 bg-purple-500/15 text-white'
+                                  : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/30'
+                              }`}
+                            >
+                              <span className="text-[11px] font-bold">{pos.label}</span>
+                              <span className="text-[9px] text-[#6a5a8a]">{pos.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <SmartImageInput
+                        label=""
+                        value={upsellMediaMain}
+                        onChange={setUpsellMediaMain}
+                        placeholder="Cole imagem/vídeo/gif (Ctrl+V), arraste ou insira URL..."
+                        aspectHint={upsellMediaType === 'photo' ? 'Foto: 16:9 ou vertical' : upsellMediaType === 'video' ? 'Vídeo: MP4 recomendado' : 'GIF: Formato animation do Telegram'}
+                      />
+                      {upsellMediaMain && (
+                        <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-black/40 aspect-video">
+                          <img src={upsellMediaMain} alt="Preview" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <div className="absolute top-2 right-2">
+                            <span className="rounded-full bg-purple-600/80 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur">
+                              {upsellMediaType === 'photo' ? '📷' : upsellMediaType === 'video' ? '🎬' : '🎞'} {upsellMediaGrid === 'main-left' ? 'Principal' : upsellMediaGrid === 'top-right' ? 'Topo Dir.' : upsellMediaGrid === 'bottom-right' ? 'Baixo Dir.' : 'Extra'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Dica Visual do Grid */}
+                  <div className="rounded-xl border border-purple-500/10 bg-[#08060f] p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6a5a8a]">Como o Grid Funciona no Telegram:</span>
+                    <div className="mt-2 grid grid-cols-3 gap-1 max-w-[200px]">
+                      <div className={`col-span-2 row-span-2 rounded-lg border flex items-center justify-center text-[9px] font-bold h-14 transition ${upsellMediaGrid === 'main-left' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>◧ Principal</div>
+                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'top-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>⊡ Top</div>
+                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'bottom-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>⊟ Bot</div>
+                    </div>
                   </div>
                 </div>
 

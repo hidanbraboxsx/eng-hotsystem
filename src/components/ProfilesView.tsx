@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   AlertCircle,
   Check,
-  CheckCircle2,
   ChevronDown,
   Copy,
   ExternalLink,
@@ -472,8 +471,8 @@ export function ProfilesView({ state, selectedBotId, refresh }: ProfilesViewProp
                     <div className="flex items-center gap-1.5">
                       <span className="text-base font-bold text-white drop-shadow">{p.name}</span>
                       {p.verified && (
-                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[#3b82f6] text-white">
-                          <CheckCircle2 className="h-3 w-3 fill-current" />
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white shadow-sm shadow-blue-500/40">
+                          <Check className="h-2.5 w-2.5 stroke-[3]" />
                         </div>
                       )}
                     </div>
@@ -982,8 +981,8 @@ export function ProfilesView({ state, selectedBotId, refresh }: ProfilesViewProp
                               {name || 'Nome da Modelo'}
                             </span>
                             {verified && (
-                              <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#3b82f6] text-white">
-                                <CheckCircle2 className="h-2.5 w-2.5 fill-current" />
+                              <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white shadow-sm shadow-blue-500/30">
+                                <Check className="h-2 w-2 stroke-[3]" />
                               </div>
                             )}
                           </div>
