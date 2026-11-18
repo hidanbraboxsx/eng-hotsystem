@@ -2,19 +2,36 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlignLeft,
   Bold,
+  Calendar,
+  Camera,
   Check,
+  CheckCheck,
+  Clock,
   Code,
+  Compass,
+  CreditCard,
+  Film,
+  Flame,
   Hash,
   ImageIcon,
   Italic,
+  Layers,
   LayoutGrid,
   Link2,
   Loader2,
+  MessageSquare,
+  PanelLeft,
   Plus,
+  Radio,
+  ShieldCheck,
+  Sparkles,
   Square,
   Tag,
+  Timer,
   Trash2,
+  Video,
   X,
+  Zap,
 } from 'lucide-react';
 import type {
   CreateTemplateInput,
@@ -34,6 +51,15 @@ interface MessageTemplateBuilderProps {
   onSaved: (template: MessageTemplate) => void;
   editTemplate?: MessageTemplate | null;
   defaultCategory?: TemplateCategory;
+  products?: Array<{
+    id: string;
+    name: string;
+    priceCents: number;
+    duration?: string | null;
+    buttonColor?: string | null;
+  }>;
+  botName?: string;
+  botAvatar?: string | null;
 }
 
 type MediaType = 'none' | 'photo' | 'video' | 'animation';
@@ -48,13 +74,13 @@ interface GridItem {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const CATEGORIES: { value: TemplateCategory; label: string; color: string }[] = [
-  { value: 'abertura',       label: 'Boas-Vindas',    color: 'blue'    },
-  { value: 'reengajamento',  label: 'Reengajamento',  color: 'emerald' },
-  { value: 'oferta',         label: 'Oferta/Planos',  color: 'amber'   },
-  { value: 'prova_social',   label: 'Prova Social',   color: 'purple'  },
-  { value: 'fechamento',     label: 'Fechamento',     color: 'rose'    },
-  { value: 'recuperacao',    label: 'Recuperação DM', color: 'green'   },
+const CATEGORIES: { value: TemplateCategory; label: string; color: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'abertura',       label: 'Boas-Vindas',    color: 'blue',    icon: MessageSquare },
+  { value: 'reengajamento',  label: 'Reengajamento',  color: 'emerald', icon: Flame         },
+  { value: 'oferta',         label: 'Oferta/Planos',  color: 'amber',   icon: Sparkles      },
+  { value: 'prova_social',   label: 'Prova Social',   color: 'purple',  icon: ShieldCheck   },
+  { value: 'fechamento',     label: 'Fechamento',     color: 'rose',    icon: CheckCheck    },
+  { value: 'recuperacao',    label: 'Recuperação DM', color: 'green',   icon: Zap           },
 ];
 
 const CATEGORY_PILL: Record<string, string> = {
@@ -77,11 +103,12 @@ const BUTTON_COLORS: { value: TemplateButton['color']; label: string; cls: strin
 const GRID_POSITIONS: Array<{
   position: GridItem['position'];
   label: string;
+  icon: React.ComponentType<{ className?: string }>;
 }> = [
-  { position: 'main-left',    label: 'Principal'   },
-  { position: 'top-right',    label: 'Topo Dir.'   },
-  { position: 'bottom-right', label: 'Baixo Dir.'  },
-  { position: 'auto',         label: 'Extra'       },
+  { position: 'main-left',    label: 'Principal',   icon: PanelLeft   },
+  { position: 'top-right',    label: 'Topo Dir.',   icon: LayoutGrid  },
+  { position: 'bottom-right', label: 'Baixo Dir.',  icon: LayoutGrid  },
+  { position: 'auto',         label: 'Extra',       icon: Layers      },
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -121,10 +148,15 @@ export function MessageTemplateBuilder({
   onSaved,
   editTemplate,
   defaultCategory = 'abertura',
+  products = [],
+  botName = 'Modelo VIP',
+  botAvatar = null,
 }: MessageTemplateBuilderProps) {
   // ── Form state ──
   const [name, setName] = useState('');
   const [category, setCategory] = useState<TemplateCategory>(defaultCategory);
+  const [funnelStage, setFunnelStage] = useState<string>('etapa_1');
+  const [triggerSchedule, setTriggerSchedule] = useState<string>('imediato');
   const [active, setActive] = useState(true);
   const [weight, setWeight] = useState(5);
   const [body, setBody] = useState('');
@@ -180,9 +212,17 @@ export function MessageTemplateBuilder({
       }
       setButtons(editTemplate.buttons ?? []);
       setTags(editTemplate.tags ?? []);
+      if (editTemplate.tags) {
+        const stageTag = editTemplate.tags.find((t) => t.startsWith('etapa:'));
+        if (stageTag) setFunnelStage(stageTag.replace('etapa:', ''));
+        const triggerTag = editTemplate.tags.find((t) => t.startsWith('trigger:'));
+        if (triggerTag) setTriggerSchedule(triggerTag.replace('trigger:', ''));
+      }
     } else {
       setName('');
       setCategory(defaultCategory);
+      setFunnelStage('etapa_1');
+      setTriggerSchedule('imediato');
       setActive(true);
       setWeight(5);
       setBody('');
@@ -273,6 +313,14 @@ export function MessageTemplateBuilder({
           }))
         : [];
 
+      const resolvedTags = Array.from(
+        new Set([
+          ...tags.filter((t) => !t.startsWith('etapa:') && !t.startsWith('trigger:')),
+          `etapa:${funnelStage}`,
+          `trigger:${triggerSchedule}`,
+        ])
+      );
+
       const input: CreateTemplateInput = {
         name:      name.trim(),
         category,
@@ -284,7 +332,7 @@ export function MessageTemplateBuilder({
         mediaGrid: resolvedGrid,
         weight,
         active,
-        tags,
+        tags:      resolvedTags,
       };
 
       const result = editTemplate
@@ -365,20 +413,73 @@ export function MessageTemplateBuilder({
           <div className="mb-4">
             <label className="mb-1.5 block text-xs font-semibold text-[#8fa0b6]">Categoria</label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.value}
-                  type="button"
-                  onClick={() => setCategory(cat.value)}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                    category === cat.value
-                      ? CATEGORY_PILL[cat.color] + ' ring-1 ring-offset-1 ring-offset-[#0d1017] ring-current'
-                      : 'border-[#1f2736] bg-transparent text-[#4a5568] hover:border-[#2d3748] hover:text-[#8fa0b6]'
-                  }`}
+              {CATEGORIES.map((cat) => {
+                const CatIcon = cat.icon;
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setCategory(cat.value)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition flex items-center gap-1.5 ${
+                      category === cat.value
+                        ? CATEGORY_PILL[cat.color] + ' ring-1 ring-offset-1 ring-offset-[#0d1017] ring-current'
+                        : 'border-[#1f2736] bg-transparent text-[#4a5568] hover:border-[#2d3748] hover:text-[#8fa0b6]'
+                    }`}
+                  >
+                    <CatIcon className="h-3 w-3 shrink-0" />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Posicionamento no Funil & Gatilho (Mapa Astral / Linha do Tempo) */}
+          <div className="mb-4 rounded-xl border border-purple-500/25 bg-[#0e0b1c] p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Compass className="h-4 w-4 text-purple-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                Posição no Funil &amp; Horário de Disparo (Mapa Astral)
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-[#9b8bb2] flex items-center gap-1">
+                  <Layers className="h-3 w-3 text-purple-400" /> Etapa da Jornada
+                </label>
+                <select
+                  value={funnelStage}
+                  onChange={(e) => setFunnelStage(e.target.value)}
+                  className="w-full rounded-xl border border-[#241d3b] bg-[#090713] px-3 py-2 text-xs text-white outline-none focus:border-purple-400"
                 >
-                  {cat.label}
-                </button>
-              ))}
+                  <option value="etapa_1">1. Boas-Vindas (/start)</option>
+                  <option value="etapa_2">2. Provocação &amp; Amostra Sensorial</option>
+                  <option value="etapa_3">3. Oferta VIP Principal &amp; Grid</option>
+                  <option value="etapa_4">4. Recuperação 1h (+30% OFF)</option>
+                  <option value="etapa_5">5. Última Chamada 24h (+40% OFF)</option>
+                  <option value="grupo_previas">Disparo no Grupo de Prévias</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-[#9b8bb2] flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-amber-400" /> Horário / Gatilho
+                </label>
+                <select
+                  value={triggerSchedule}
+                  onChange={(e) => setTriggerSchedule(e.target.value)}
+                  className="w-full rounded-xl border border-[#241d3b] bg-[#090713] px-3 py-2 text-xs text-white outline-none focus:border-purple-400"
+                >
+                  <option value="imediato">⚡ Imediato (Ao Iniciar)</option>
+                  <option value="delay_5m">⏱ +5 minutos de inatividade</option>
+                  <option value="delay_15m">⏱ +15 minutos de inatividade</option>
+                  <option value="delay_1h">⏱ +1 hora após abandono</option>
+                  <option value="horario_nobre">🌙 Horário Nobre (20h - 23h)</option>
+                  <option value="delay_24h">⏳ 24 horas (Escassez relâmpago)</option>
+                  <option value="delay_48h">⏳ 48 horas (Cancelamento)</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -535,6 +636,78 @@ export function MessageTemplateBuilder({
           {/* ═══ SECTION 4 — Buttons ═══ */}
           <SectionLabel>Botões Telegram</SectionLabel>
 
+          {/* Planos VIP Cadastrados (Inserir com 1 Clique) */}
+          {products && products.length > 0 && (
+            <div className="rounded-xl border border-[#232d3d] bg-[#0c1017] p-3 space-y-2 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8da0b6] flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5 text-[#d4f933]" /> Inserir Botão de Plano VIP com 1 Clique:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {products.map((prod) => (
+                  <button
+                    key={prod.id}
+                    type="button"
+                    onClick={() => {
+                      if (buttons.length >= 6) return;
+                      const preco = (prod.priceCents / 100).toFixed(2).replace('.', ',');
+                      const btnColor = prod.buttonColor === 'green' ? 'green' : prod.buttonColor === 'purple' ? 'purple' : prod.buttonColor === 'red' ? 'red' : 'default';
+                      setButtons((prev) => [
+                        ...prev,
+                        {
+                          text: `💎 ${prod.name} (${prod.duration || '30 dias'}) - R$ ${preco}`,
+                          url: `https://pay.syncpay.com/checkout/${prod.id}`,
+                          color: btnColor as any,
+                          row: prev.length >= 2 ? 1 : 0,
+                        },
+                      ]);
+                    }}
+                    className="rounded-lg border border-[#2b3548] bg-[#121824] px-2.5 py-1 text-xs font-semibold text-white hover:border-[#d4f933] hover:text-[#d4f933] transition flex items-center gap-1.5"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>{prod.name}</span>
+                    <span className="font-mono text-[10px] text-[#718096]">R$ {(prod.priceCents / 100).toFixed(2).replace('.', ',')}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ações Prontas de Alta Conversão */}
+          <div className="rounded-xl border border-[#232d3d] bg-[#0c1017] p-3 space-y-2 mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8da0b6] flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-amber-400" /> Ações Prontas de Alta Conversão:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { text: '🔞 Destravar Vídeo Sem Tarja', url: 'https://t.me/seubot?start=previas_free', color: 'red' as const },
+                { text: '💬 Falar Comigo no Privado', url: 'https://t.me/seubot?start=dm_privada', color: 'purple' as const },
+                { text: '🔥 Vaga com 30% OFF (Relâmpago)', url: 'https://t.me/seubot?start=desconto_vip', color: 'amber' as const },
+                { text: '📋 Copiar Código PIX Instantâneo', url: 'https://pay.syncpay.com/pix', color: 'green' as const },
+              ].map((act, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    if (buttons.length >= 6) return;
+                    setButtons((prev) => [
+                      ...prev,
+                      {
+                        text: act.text,
+                        url: act.url,
+                        color: act.color,
+                        row: prev.length >= 2 ? 1 : 0,
+                      },
+                    ]);
+                  }}
+                  className="rounded-lg border border-[#232d3d] bg-[#0d121c] px-2 py-1 text-[11px] font-medium text-[#a0aec0] hover:border-purple-400 hover:text-white transition flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>{act.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             {buttons.map((btn, idx) => (
               <div
@@ -661,6 +834,8 @@ export function MessageTemplateBuilder({
           <SectionLabel>Preview em Tempo Real</SectionLabel>
 
           <TelegramPreview
+            botName={botName}
+            botAvatar={botAvatar}
             text={body || '_Escreva seu texto acima para ver o preview..._'}
             mediaUrl={mediaMode === 'single' && mediaType !== 'none' ? mediaUrl || null : null}
             mediaType={mediaType !== 'none' ? mediaType : 'none'}

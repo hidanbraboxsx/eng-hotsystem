@@ -5,28 +5,34 @@ import {
   Bot as BotIcon,
   Camera,
   Check,
+  CheckCheck,
   CheckCircle2,
   ChevronRight,
   Clock,
   Command,
+  Compass,
   Copy,
   CreditCard,
   ExternalLink,
   Eye,
   EyeOff,
+  Film,
   Flame,
   Globe,
   Hash,
   Image as ImageIcon,
   Instagram,
   Laptop,
+  Layers,
   KeyRound,
+  LayoutGrid,
   Link2,
   Loader2,
   Lock,
   MessageCircle,
   MessageSquare,
   MousePointerClick,
+  PanelLeft,
   PhoneCall,
   Pencil,
   Play,
@@ -42,6 +48,7 @@ import {
   Smartphone,
   Sparkles,
   Tag,
+  Timer,
   ToggleLeft,
   ToggleRight,
   Trash2,
@@ -288,8 +295,12 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
   const [copiedBioText, setCopiedBioText] = useState(false);
   const [showQrCode, setShowQrCode] = useState(false);
   const [botModalCategory, setBotModalCategory] = useState<
-    'dm_welcome' | 'plans_upsell' | 'preview_group' | 'recovery' | 'vip_channel' | 'bio_profile'
+    'dm_welcome' | 'plans_upsell' | 'preview_group' | 'recovery' | 'funnel_simulation' | 'vip_channel' | 'bio_profile'
   >('dm_welcome');
+  const [simStep, setSimStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [simSelectedPlanId, setSimSelectedPlanId] = useState<string | null>(null);
+  const [simPixCopied, setSimPixCopied] = useState(false);
+  const [simPixPaid, setSimPixPaid] = useState(false);
   const [smartPreviewMode, setSmartPreviewMode] = useState<'telegram' | 'mobile_bio'>('telegram');
 
   // Estados do MessageTemplateBuilder
@@ -1182,8 +1193,9 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                 { id: 'plans_upsell', label: '2. Planos & Upsell', icon: Sparkles },
                 { id: 'preview_group', label: '3. Grupo de Prévias', icon: Radio },
                 { id: 'recovery', label: '4. Recuperação', icon: Zap },
-                { id: 'vip_channel', label: '5. Canal VIP', icon: ShieldCheck },
-                { id: 'bio_profile', label: '6. Bio Link / Perfil', icon: Globe },
+                { id: 'funnel_simulation', label: '5. Simulador & Mapa Astral do Funil', icon: Compass },
+                { id: 'vip_channel', label: '6. Canal VIP', icon: ShieldCheck },
+                { id: 'bio_profile', label: '7. Bio Link / Perfil', icon: Globe },
               ].map((cat) => {
                 const Icon = cat.icon;
                 return (
@@ -1744,23 +1756,27 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8575a0]">Tipo de Mídia:</span>
                         <div className="flex gap-1.5">
                           {([
-                            { id: 'photo' as const, label: '📷 Foto', icon: 'photo' },
-                            { id: 'video' as const, label: '🎬 Vídeo', icon: 'video' },
-                            { id: 'animation' as const, label: '🎞 GIF', icon: 'gif' },
-                          ] as const).map((t) => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => setUpsellMediaType(t.id)}
-                              className={`flex-1 rounded-xl border py-1.5 px-2 text-[11px] font-bold transition ${
-                                upsellMediaType === t.id
-                                  ? 'border-purple-400 bg-purple-500/20 text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
-                                  : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/40'
-                              }`}
-                            >
-                              {t.label}
-                            </button>
-                          ))}
+                            { id: 'photo' as const, label: 'Foto', icon: Camera },
+                            { id: 'video' as const, label: 'Vídeo', icon: Video },
+                            { id: 'animation' as const, label: 'GIF', icon: Film },
+                          ] as const).map((t) => {
+                            const IconComponent = t.icon;
+                            return (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setUpsellMediaType(t.id)}
+                                className={`flex-1 rounded-xl border py-1.5 px-2 text-[11px] font-bold transition flex items-center justify-center gap-1.5 ${
+                                  upsellMediaType === t.id
+                                    ? 'border-purple-400 bg-purple-500/20 text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                                    : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/40'
+                                }`}
+                              >
+                                <IconComponent className="h-3.5 w-3.5 shrink-0" />
+                                <span>{t.label}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -1769,25 +1785,31 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8575a0]">Posição no Grid do Telegram:</span>
                         <div className="grid grid-cols-2 gap-1.5">
                           {([
-                            { id: 'main-left' as const, label: '◧ Principal (Esq.)', desc: 'Imagem grande à esquerda' },
-                            { id: 'top-right' as const, label: '⊡ Topo Direito', desc: 'Miniatura superior direita' },
-                            { id: 'bottom-right' as const, label: '⊟ Baixo Direito', desc: 'Miniatura inferior direita' },
-                            { id: 'auto' as const, label: '⊞ Extra (Auto)', desc: 'Posição automática' },
-                          ] as const).map((pos) => (
-                            <button
-                              key={pos.id}
-                              type="button"
-                              onClick={() => setUpsellMediaGrid(pos.id)}
-                              className={`flex flex-col items-start gap-0.5 rounded-xl border p-2 text-left transition ${
-                                upsellMediaGrid === pos.id
-                                  ? 'border-purple-400 bg-purple-500/15 text-white'
-                                  : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/30'
-                              }`}
-                            >
-                              <span className="text-[11px] font-bold">{pos.label}</span>
-                              <span className="text-[9px] text-[#6a5a8a]">{pos.desc}</span>
-                            </button>
-                          ))}
+                            { id: 'main-left' as const, label: 'Principal (Esq.)', desc: 'Imagem grande à esquerda', icon: PanelLeft },
+                            { id: 'top-right' as const, label: 'Topo Direito', desc: 'Miniatura superior direita', icon: LayoutGrid },
+                            { id: 'bottom-right' as const, label: 'Baixo Direito', desc: 'Miniatura inferior direita', icon: LayoutGrid },
+                            { id: 'auto' as const, label: 'Extra (Auto)', desc: 'Posição automática', icon: SlidersHorizontal },
+                          ] as const).map((pos) => {
+                            const PosIcon = pos.icon;
+                            return (
+                              <button
+                                key={pos.id}
+                                type="button"
+                                onClick={() => setUpsellMediaGrid(pos.id)}
+                                className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-left transition ${
+                                  upsellMediaGrid === pos.id
+                                    ? 'border-purple-400 bg-purple-500/15 text-white'
+                                    : 'border-[#1e1830] bg-[#09070f] text-[#7060a0] hover:border-purple-500/30'
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <PosIcon className="h-3 w-3 shrink-0 text-purple-400" />
+                                  <span className="text-[11px] font-bold">{pos.label}</span>
+                                </div>
+                                <span className="text-[9px] text-[#6a5a8a]">{pos.desc}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -1802,8 +1824,9 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-black/40 aspect-video">
                           <img src={upsellMediaMain} alt="Preview" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           <div className="absolute top-2 right-2">
-                            <span className="rounded-full bg-purple-600/80 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur">
-                              {upsellMediaType === 'photo' ? '📷' : upsellMediaType === 'video' ? '🎬' : '🎞'} {upsellMediaGrid === 'main-left' ? 'Principal' : upsellMediaGrid === 'top-right' ? 'Topo Dir.' : upsellMediaGrid === 'bottom-right' ? 'Baixo Dir.' : 'Extra'}
+                            <span className="rounded-full bg-purple-600/90 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur inline-flex items-center gap-1">
+                              {upsellMediaType === 'photo' ? <Camera className="h-2.5 w-2.5" /> : upsellMediaType === 'video' ? <Video className="h-2.5 w-2.5" /> : <Film className="h-2.5 w-2.5" />}
+                              <span>{upsellMediaGrid === 'main-left' ? 'Principal' : upsellMediaGrid === 'top-right' ? 'Topo Dir.' : upsellMediaGrid === 'bottom-right' ? 'Baixo Dir.' : 'Extra'}</span>
                             </span>
                           </div>
                         </div>
@@ -1815,9 +1838,12 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                   <div className="rounded-xl border border-purple-500/10 bg-[#08060f] p-3">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#6a5a8a]">Como o Grid Funciona no Telegram:</span>
                     <div className="mt-2 grid grid-cols-3 gap-1 max-w-[200px]">
-                      <div className={`col-span-2 row-span-2 rounded-lg border flex items-center justify-center text-[9px] font-bold h-14 transition ${upsellMediaGrid === 'main-left' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>◧ Principal</div>
-                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'top-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>⊡ Top</div>
-                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'bottom-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>⊟ Bot</div>
+                      <div className={`col-span-2 row-span-2 rounded-lg border flex flex-col items-center justify-center gap-1 text-[9px] font-bold h-14 transition ${upsellMediaGrid === 'main-left' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>
+                        <PanelLeft className="h-3.5 w-3.5" />
+                        <span>Principal</span>
+                      </div>
+                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'top-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>Top</div>
+                      <div className={`rounded-lg border flex items-center justify-center text-[9px] font-bold h-7 transition ${upsellMediaGrid === 'bottom-right' ? 'border-purple-400 bg-purple-500/20 text-purple-300' : 'border-[#1e1830] bg-[#0c0916] text-[#4a3a6a]'}`}>Bot</div>
                     </div>
                   </div>
                 </div>
@@ -2760,7 +2786,529 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
               </div>
             )}
 
-            {/* 5. Canal VIP & Comunidades */}
+            {/* 5. Simulador End-to-End & Mapa Astral do Funil */}
+            {botModalCategory === 'funnel_simulation' && (
+              <div className="space-y-4">
+                {/* Header do Simulador */}
+                <div className="rounded-2xl border border-purple-500/30 bg-[#0e0c1a] p-4 shadow-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-500/20 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20 text-purple-300 shadow-md shadow-purple-500/10">
+                        <Compass className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-extrabold uppercase tracking-wider text-purple-200">
+                            Mapa Astral &amp; Simulador Real do Funil Telegram
+                          </h3>
+                          <span className="rounded-full border border-purple-400/30 bg-purple-500/15 px-2 py-0.5 text-[9px] font-bold text-purple-300">
+                            100% Sincronizado
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#9b8bb2]">
+                          Vivencie a jornada completa do lead desde o /start até a geração de PIX e liberação do canal VIP.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSimStep(1);
+                          setSimPixPaid(false);
+                          setSimPixCopied(false);
+                          setSimSelectedPlanId(null);
+                          notify('info', 'Simulador Reiniciado', 'O fluxo foi resetado para o início (/start).');
+                        }}
+                        className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Resetar Simulação
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Barra de Navegação de Etapas do Simulador */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    {[
+                      { step: 1 as const, label: '1. Início (/start)', icon: MessageSquare },
+                      { step: 2 as const, label: '2. Provocação', icon: Flame },
+                      { step: 3 as const, label: '3. Planos & Grid', icon: Sparkles },
+                      { step: 4 as const, label: '4. Checkout PIX', icon: CreditCard },
+                      { step: 5 as const, label: '5. VIP Liberado', icon: ShieldCheck },
+                    ].map((st) => {
+                      const StepIcon = st.icon;
+                      const isCurrent = simStep === st.step;
+                      const isPast = simStep > st.step;
+                      return (
+                        <button
+                          key={st.step}
+                          type="button"
+                          onClick={() => setSimStep(st.step)}
+                          className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                            isCurrent
+                              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                              : isPast
+                              ? 'border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'
+                              : 'border border-[#201c30] bg-[#090712] text-[#6d5e82] hover:text-[#9b8bb2]'
+                          }`}
+                        >
+                          <StepIcon className="h-3 w-3 shrink-0" />
+                          <span>{st.label}</span>
+                          {isPast && <Check className="h-3 w-3 ml-0.5 text-emerald-400" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Grid Principal: Mapa Astral à Esquerda + Simulador Telegram à Direita */}
+                <div className="grid gap-4 lg:grid-cols-12">
+                  {/* Coluna Esquerda: Linha do Tempo Cósmica / Mapa do Funil (7 Colunas) */}
+                  <div className="space-y-3 lg:col-span-7">
+                    <div className="rounded-2xl border border-[#232035] bg-[#0c0a17] p-4">
+                      <div className="mb-3 flex items-center justify-between border-b border-[#1c182b] pb-2">
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-4 w-4 text-purple-400" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-white">
+                            Linha do Tempo dos Disparos &amp; Gatilhos
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[#7d6e94]">5 Etapas Automatizadas</span>
+                      </div>
+
+                      {/* Fluxo com Linha Conectora */}
+                      <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-[2px] before:bg-gradient-to-b before:from-purple-500 before:via-[#d4f933] before:to-emerald-500">
+                        {/* Etapa 1 */}
+                        <div
+                          onClick={() => setSimStep(1)}
+                          className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                            simStep === 1
+                              ? 'border-purple-400 bg-purple-500/15 shadow-md shadow-purple-500/10'
+                              : 'border-[#1e1a30] bg-[#090713] hover:border-purple-500/40'
+                          }`}
+                        >
+                          <span className="absolute -left-[23px] top-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-bold text-white shadow">
+                            1
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <MessageSquare className="h-3.5 w-3.5 text-purple-400" /> Boas-Vindas &amp; Apresentação (/start)
+                            </span>
+                            <span className="rounded bg-purple-500/20 px-2 py-0.5 text-[9px] font-bold text-purple-300 flex items-center gap-1">
+                              <Timer className="h-2.5 w-2.5" /> Imediato
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#8e7ea7] leading-relaxed">
+                            Disparo instantâneo com texto sedutor e mídia de introdução ({upsellMediaWelcome ? 'Mídia cadastrada' : 'Foto de perfil'}).
+                          </p>
+                        </div>
+
+                        {/* Etapa 2 */}
+                        <div
+                          onClick={() => setSimStep(2)}
+                          className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                            simStep === 2
+                              ? 'border-purple-400 bg-purple-500/15 shadow-md shadow-purple-500/10'
+                              : 'border-[#1e1a30] bg-[#090713] hover:border-purple-500/40'
+                          }`}
+                        >
+                          <span className="absolute -left-[23px] top-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-bold text-white shadow">
+                            2
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Flame className="h-3.5 w-3.5 text-amber-400" /> Provocação Sensorial (Áudio/Teaser)
+                            </span>
+                            <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-300 flex items-center gap-1">
+                              <Clock className="h-2.5 w-2.5" /> +2 a 5 min
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#8e7ea7] leading-relaxed">
+                            Envio de áudio proibido na cama ou prévia sem censura para elevar a temperatura do lead.
+                          </p>
+                        </div>
+
+                        {/* Etapa 3 */}
+                        <div
+                          onClick={() => setSimStep(3)}
+                          className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                            simStep === 3
+                              ? 'border-purple-400 bg-purple-500/15 shadow-md shadow-purple-500/10'
+                              : 'border-[#1e1a30] bg-[#090713] hover:border-purple-500/40'
+                          }`}
+                        >
+                          <span className="absolute -left-[23px] top-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-bold text-white shadow">
+                            3
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> Apresentação de Planos &amp; Upsell (Grid)
+                            </span>
+                            <span className="rounded bg-[#d4f933]/15 px-2 py-0.5 text-[9px] font-bold text-[#d4f933] flex items-center gap-1">
+                              <PanelLeft className="h-2.5 w-2.5" /> Grid Telegram
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#8e7ea7] leading-relaxed">
+                            Mídia posicionada em layout Telegram ({upsellMediaType.toUpperCase()} em {upsellMediaGrid}) com botões dos planos VIP.
+                          </p>
+                        </div>
+
+                        {/* Etapa 4 */}
+                        <div
+                          onClick={() => setSimStep(4)}
+                          className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                            simStep === 4
+                              ? 'border-purple-400 bg-purple-500/15 shadow-md shadow-purple-500/10'
+                              : 'border-[#1e1a30] bg-[#090713] hover:border-purple-500/40'
+                          }`}
+                        >
+                          <span className="absolute -left-[23px] top-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-bold text-white shadow">
+                            4
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <CreditCard className="h-3.5 w-3.5 text-emerald-400" /> Checkout Automático SyncPay
+                            </span>
+                            <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300 flex items-center gap-1">
+                              <QrCode className="h-2.5 w-2.5" /> PIX Dinâmico
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#8e7ea7] leading-relaxed">
+                            Geração de QR Code e código PIX Copia e Cola instantâneo com monitoramento ativo de pagamento.
+                          </p>
+                        </div>
+
+                        {/* Etapa 5 */}
+                        <div
+                          onClick={() => setSimStep(5)}
+                          className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                            simStep === 5
+                              ? 'border-purple-400 bg-purple-500/15 shadow-md shadow-purple-500/10'
+                              : 'border-[#1e1a30] bg-[#090713] hover:border-purple-500/40'
+                          }`}
+                        >
+                          <span className="absolute -left-[23px] top-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-bold text-white shadow">
+                            5
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <ShieldCheck className="h-3.5 w-3.5 text-[#d4f933]" /> Entrega do Canal VIP Anti-Vazamento
+                            </span>
+                            <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300 flex items-center gap-1">
+                              <CheckCheck className="h-2.5 w-2.5" /> Liberado
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#8e7ea7] leading-relaxed">
+                            Gera e entrega o link de uso único que expira após 1 clique para proteger o canal de vazamentos.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dica da Recuperação Automática */}
+                    <div className="rounded-xl border border-emerald-500/20 bg-[#0b1414] p-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">E se o lead não pagar o PIX gerado?</p>
+                          <p className="text-[11px] text-[#719999]">
+                            A automação dispara 4 ofertas agressivas (25% a 40% OFF) em 1h, 24h e 48h.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBotModalCategory('recovery')}
+                        className="btn-secondary text-[11px] py-1 px-2.5 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 shrink-0"
+                      >
+                        Ver Recuperação
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Coluna Direita: O Chat Telegram Real & Interativo (5 Colunas) */}
+                  <div className="lg:col-span-5 flex flex-col items-center">
+                    <div className="w-full max-w-[380px] overflow-hidden rounded-3xl border border-[#2b3548] bg-[#0e1621] text-[#f5f5f5] shadow-2xl">
+                      {/* Header do Chat Telegram */}
+                      <div className="flex items-center gap-3 border-b border-[#17212b] bg-[#17212b]/95 px-4 py-3 backdrop-blur">
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-pink-500/30 bg-gradient-to-tr from-pink-600 via-rose-500 to-amber-400 text-xs font-bold text-white shadow-md">
+                          {openBot.avatarUrl ? (
+                            <img src={openBot.avatarUrl} alt={openBot.firstName} className="h-full w-full object-cover" />
+                          ) : (
+                            <span>{openBot.firstName.slice(0, 2).toUpperCase()}</span>
+                          )}
+                          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-[#17212b] bg-emerald-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate text-xs font-bold text-white">{openBot.firstName}</span>
+                            <span className="rounded bg-[#2b5278]/60 px-1 py-0.2 text-[9px] font-semibold text-[#82b5e7]">
+                              bot
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-[#708499]">online agora • Simulador Ativo</p>
+                        </div>
+                        <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[9px] font-bold text-purple-300 border border-purple-500/30">
+                          Etapa {simStep}/5
+                        </span>
+                      </div>
+
+                      {/* Área da Mensagem Dinâmica do Telegram */}
+                      <div className="p-3 sm:p-4 space-y-3 min-h-[420px] bg-[#0e1621] flex flex-col justify-end">
+                        {/* ETAPA 1: Boas-Vindas */}
+                        {simStep === 1 && (
+                          <div className="space-y-2 rounded-2xl rounded-tl-sm border border-[#242f3d] bg-[#182533] p-3 shadow-md">
+                            {(upsellMediaWelcome || openBot.avatarUrl) && (
+                              <div className="overflow-hidden rounded-xl border border-white/10 aspect-video bg-black/40">
+                                <img
+                                  src={upsellMediaWelcome || openBot.avatarUrl || ''}
+                                  alt="Boas-vindas"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              Oie meu anjo! 💋 Que delícia ter você aqui comigo! Preparei conteúdos muito exclusivos e vídeos que eu jamais postaria no Instagram aberto...
+                            </p>
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              O que você quer ver primeiro?
+                            </p>
+                            <div className="space-y-1.5 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setSimStep(2)}
+                                className="w-full rounded-xl bg-[#203246] hover:bg-[#283e57] text-[#e1ebf5] py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                              >
+                                <Flame className="h-3.5 w-3.5 text-amber-400" /> Quero Ver Prévia Grátis
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSimStep(3)}
+                                className="w-full rounded-xl bg-[#3b7c3d] hover:bg-[#438f46] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                              >
+                                <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> Ver Planos VIP &amp; Preços
+                              </button>
+                            </div>
+                            <span className="block text-right text-[9px] font-mono text-[#708499]">19:42 ✓✓</span>
+                          </div>
+                        )}
+
+                        {/* ETAPA 2: Provocação Sensorial */}
+                        {simStep === 2 && (
+                          <div className="space-y-2 rounded-2xl rounded-tl-sm border border-[#242f3d] bg-[#182533] p-3 shadow-md">
+                            {/* Card de Áudio Simulado */}
+                            <div className="flex items-center gap-2.5 rounded-xl border border-[#2c3d52] bg-[#131f2e] p-2.5">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-600 text-white shrink-0">
+                                <Play className="h-4 w-4 fill-white ml-0.5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between text-[10px] text-[#90a8c2]">
+                                  <span className="font-bold text-white">Áudio Proibido na Cama</span>
+                                  <span>0:42</span>
+                                </div>
+                                <div className="mt-1 h-1.5 w-full rounded-full bg-[#203246] overflow-hidden">
+                                  <div className="h-full w-2/5 rounded-full bg-purple-400" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              Gravei esse áudio tocando meu corpo todinho enquanto pensava em você... Mas o vídeo completo sem tarja tá liberado só no meu VIP!
+                            </p>
+                            <div className="space-y-1.5 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setSimStep(3)}
+                                className="w-full rounded-xl bg-[#a33232] hover:bg-[#b83838] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                              >
+                                <Sparkles className="h-3.5 w-3.5" /> Destravar Vídeo Sem Tarja Agora
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSimStep(1)}
+                                className="w-full text-center text-[10px] text-[#708499] hover:text-white pt-1"
+                              >
+                                ← Voltar ao início
+                              </button>
+                            </div>
+                            <span className="block text-right text-[9px] font-mono text-[#708499]">19:44 ✓✓</span>
+                          </div>
+                        )}
+
+                        {/* ETAPA 3: Apresentação de Planos VIP & Grid */}
+                        {simStep === 3 && (
+                          <div className="space-y-2 rounded-2xl rounded-tl-sm border border-[#242f3d] bg-[#182533] p-3 shadow-md">
+                            {/* Grid do Telegram */}
+                            <div className="relative overflow-hidden rounded-xl border border-white/10 aspect-video bg-black/40">
+                              <img
+                                src={upsellMediaMain || upsellMediaWelcome || openBot.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
+                                alt="Mídia de Upsell"
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute top-2 left-2">
+                                <span className="rounded-full bg-purple-600/90 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur inline-flex items-center gap-1">
+                                  {upsellMediaType === 'photo' ? <Camera className="h-2.5 w-2.5" /> : upsellMediaType === 'video' ? <Video className="h-2.5 w-2.5" /> : <Film className="h-2.5 w-2.5" />}
+                                  <span>Grid {upsellMediaGrid}</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              🔥 <strong>PLANOS DE ACESSO VIP LIBERADOS:</strong>
+                              <br />
+                              Acesso imediato a todos os vídeos proibidos, chamadas e grupo secreto. Escolha seu plano com liberação automática:
+                            </p>
+
+                            {/* Botões dos Planos Reais */}
+                            <div className="space-y-1.5 pt-1">
+                              {(() => {
+                                const botPlans = state.products.filter(
+                                  (p) => !p.botId || p.botId === openBot.id
+                                );
+                                if (botPlans.length > 0) {
+                                  return botPlans.map((prod) => (
+                                    <button
+                                      key={prod.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSimSelectedPlanId(prod.id);
+                                        setSimStep(4);
+                                      }}
+                                      className="w-full rounded-xl bg-[#3b7c3d] hover:bg-[#438f46] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-between"
+                                    >
+                                      <span>💎 {prod.name} ({prod.duration || '30 dias'})</span>
+                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">
+                                        {formatBRL(prod.priceCents)}
+                                      </span>
+                                    </button>
+                                  ));
+                                }
+                                return (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSimSelectedPlanId('demo_1');
+                                        setSimStep(4);
+                                      }}
+                                      className="w-full rounded-xl bg-[#3b7c3d] hover:bg-[#438f46] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-between"
+                                    >
+                                      <span>💎 VIP MENSAL (30 dias)</span>
+                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">R$ 19,90</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSimSelectedPlanId('demo_2');
+                                        setSimStep(4);
+                                      }}
+                                      className="w-full rounded-xl bg-[#5b3c88] hover:bg-[#6b479e] text-white py-2 px-3 text-xs font-bold transition flex items-center justify-between"
+                                    >
+                                      <span>👑 VITALÍCIO + BÔNUS DM</span>
+                                      <span className="font-mono bg-black/20 px-1.5 py-0.5 rounded text-[11px]">R$ 47,00</span>
+                                    </button>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                            <span className="block text-right text-[9px] font-mono text-[#708499]">19:45 ✓✓</span>
+                          </div>
+                        )}
+
+                        {/* ETAPA 4: Checkout Automático SyncPay */}
+                        {simStep === 4 && (
+                          <div className="space-y-2 rounded-2xl rounded-tl-sm border border-emerald-500/30 bg-[#142328] p-3 shadow-md">
+                            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1">
+                                <QrCode className="h-3.5 w-3.5" /> PIX Dinâmico Gerado
+                              </span>
+                              <span className="font-mono text-[10px] font-bold text-amber-300 animate-pulse">
+                                ⏳ Expira em 14:59
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              Copie a chave PIX abaixo ou aponte a câmera do seu banco. A liberação do Canal VIP é 100% instantânea via SyncPay:
+                            </p>
+
+                            {/* Caixa do Código PIX Copia e Cola */}
+                            <div className="rounded-xl border border-emerald-500/30 bg-[#0c181b] p-2 space-y-1.5">
+                              <p className="font-mono text-[9px] text-emerald-200/80 truncate">
+                                00020126580014br.gov.bcb.pix0136syncpay-checkout-live-918928374
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSimPixCopied(true);
+                                  notify('success', 'Chave PIX Copiada!', 'Código Copia e Cola pronto para colar no banco.');
+                                  setTimeout(() => setSimPixCopied(false), 2500);
+                                }}
+                                className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-1.5 px-2 text-[11px] font-bold transition flex items-center justify-center gap-1.5"
+                              >
+                                {simPixCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                {simPixCopied ? 'Chave PIX Copiada!' : 'Copiar Código PIX'}
+                              </button>
+                            </div>
+
+                            {/* Botão de Simulação de Pagamento Aprovado */}
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSimPixPaid(true);
+                                  setSimStep(5);
+                                  notify('success', 'Pagamento Confirmado!', 'Webhook SyncPay validou o PIX. Canal liberado!');
+                                }}
+                                className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-[#d4f933] text-black font-extrabold py-2 px-3 text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCheck className="h-4 w-4" /> Simular Pagamento Aprovado
+                              </button>
+                            </div>
+                            <span className="block text-right text-[9px] font-mono text-[#708499]">19:46 ✓✓</span>
+                          </div>
+                        )}
+
+                        {/* ETAPA 5: Liberação do Canal VIP */}
+                        {simStep === 5 && (
+                          <div className="space-y-2 rounded-2xl rounded-tl-sm border border-purple-500/30 bg-[#1c142b] p-3 shadow-md">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-[#d4f933]">
+                              <ShieldCheck className="h-4 w-4" /> Pagamento Confirmado com Sucesso!
+                            </div>
+                            <p className="text-xs text-[#e1ebf5] leading-relaxed">
+                              Seja muito bem-vindo ao meu paraíso secreto! 💋 Seu link de acesso exclusivo e de uso único foi gerado pelo sistema anti-vazamento:
+                            </p>
+                            <div className="space-y-1.5 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => notify('info', 'Link VIP Seguro', 'Este link de convite expira após 1 uso único.')}
+                                className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white py-2.5 px-3 text-xs font-extrabold shadow-md shadow-purple-600/30 transition flex items-center justify-center gap-2"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" /> ENTRAR NO CANAL VIP AGORA
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSimStep(1);
+                                  setSimPixPaid(false);
+                                  setSimSelectedPlanId(null);
+                                }}
+                                className="w-full text-center text-[10px] text-purple-300 hover:text-white pt-1"
+                              >
+                                🔄 Reiniciar Teste do Início
+                              </button>
+                            </div>
+                            <span className="block text-right text-[9px] font-mono text-[#708499]">19:47 ✓✓</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 6. Canal VIP & Comunidades */}
             {botModalCategory === 'vip_channel' && (
               <div className="space-y-4">
                 {/* Canal de Enviaveis / VIP & Funil de Liberação Segura 🛡️ */}
@@ -3378,6 +3926,9 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
         }}
         editTemplate={editingTemplate}
         defaultCategory={templateBuilderCategory}
+        products={openBot ? state.products.filter((p) => !p.botId || p.botId === openBot.id) : state.products}
+        botName={openBot?.firstName || 'Modelo VIP'}
+        botAvatar={openBot?.avatarUrl || null}
       />
     </div>
   );
