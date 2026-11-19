@@ -16,6 +16,7 @@ import {
   getChatMemberCount,
   getUpdates,
   normalizeTelegramError,
+  sendRichMessage,
   sendText,
   TelegramError,
   type TelegramMessage,
@@ -130,10 +131,20 @@ async function replyToLead(
   token: string,
   lead: Lead,
   text: string,
-  buttons?: Array<{ text: string; url?: string; callbackData?: string }>
+  buttons?: Array<{ text: string; url?: string; callbackData?: string }>,
+  options?: { imageUrl?: string | null; mediaType?: 'photo' | 'video' | 'animation' }
 ): Promise<boolean> {
   try {
-    const result = await sendText(token, lead.telegramUserId, text, buttons);
+    let result: { message_id: number };
+    if (options?.imageUrl && /^https?:\/\//i.test(options.imageUrl)) {
+      result = await sendRichMessage(token, lead.telegramUserId, text, {
+        imageUrl: options.imageUrl,
+        mediaType: options.mediaType || 'photo',
+        buttons,
+      });
+    } else {
+      result = await sendText(token, lead.telegramUserId, text, buttons);
+    }
     logOutbound(bot.id, lead.telegramUserId, lead.id, text, 'enviado', String(result.message_id), null);
     return true;
   } catch (error) {
@@ -381,7 +392,9 @@ async function processTelegramUpdateInner(botId: string, update: TelegramUpdate)
               { text: '✅ Já Paguei! Liberar VIP', callbackData: 'check_vip_access' },
               { text: '⬅️ Voltar aos Planos', callbackData: 'menu' },
             ];
-            void replyToLead(bot, token, lead, pixMsg, pixButtons);
+            void replyToLead(bot, token, lead, pixMsg, pixButtons, {
+              imageUrl: product.paymentImageUrl || null,
+            });
           } catch (err) {
             console.error('[updates] Falha ao gerar PIX SyncPay:', err);
             if (product.pixCode) {
@@ -396,10 +409,17 @@ async function processTelegramUpdateInner(botId: string, update: TelegramUpdate)
                 `Chave PIX para pagamento:\n\n` +
                 `\`${product.pixCode}\`\n\n` +
                 `Envie o comprovante após pagar para liberar o acesso!`;
-              void replyToLead(bot, token, lead, pixMsg, [
-                { text: '✅ Já Paguei! Liberar VIP', callbackData: 'check_vip_access' },
-                { text: '⬅️ Voltar aos Planos', callbackData: 'menu' },
-              ]);
+              void replyToLead(
+                bot,
+                token,
+                lead,
+                pixMsg,
+                [
+                  { text: '✅ Já Paguei! Liberar VIP', callbackData: 'check_vip_access' },
+                  { text: '⬅️ Voltar aos Planos', callbackData: 'menu' },
+                ],
+                { imageUrl: product.paymentImageUrl || null }
+              );
             } else {
               void replyToLead(
                 bot,

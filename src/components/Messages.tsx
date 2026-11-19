@@ -69,7 +69,33 @@ export interface StrategyTemplate {
 
 const TEMPLATES_BY_LANG: Record<LanguageCode, StrategyTemplate[]> = {
   pt: [
-    // --- MODELOS DE RECUPERAÇÃO HOT (30% OFF / 25% OFF / ÁUDIO / BARULHO MOLHADO) ---
+    // --- MODELOS DE RECUPERAÇÃO HOT (ESTILOS OFICIAIS TELEGRAM) ---
+    {
+      name: '🔥 Última Chance (R$ 9,90 Vitalício + Chamada)',
+      category: 'Recuperação Hot 🔥',
+      text: `🔥 ÚLTIMA CHANCE — R$ 9,90 VITALÍCIO + CHAMADA DE VIDEO\n\nVocê já sabe que sou santinha mas nem tanto... e eu posso te mostrar tudinho em uma video chamada rs. 😈\n\n⌛ Essa chance some em breve.\n👇 Entra agora por R$ 9,90`,
+      buttons: [
+        { id: 1, text: 'VITALÍCIO + 🎁 por R$ 9.90', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+      ],
+    },
+    {
+      name: '🥺 Desabafo & Vulnerabilidade (60% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `Tá bom... vou te contar tudo 😔\n\nTô precisando muito esse mês\nFaculdade atrasada, aluguel no limite, contas acumulando...\nEsse clubinho é tudo que tenho pra me manter\nColoquei o menor preço possível\n\nSe não der pra entrar agora, entendo...\nMas se der, me ajuda? 🥺\nTe prometo que não vai se arrepender 😈 👇`,
+      buttons: [
+        { id: 1, text: 'MENSAL + 🎁 por R$ 7.96 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DIA NO PARAISO 😈 por R$ 3.96 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
+    {
+      name: '🔥 Teaser Safada Sem Tarja (35% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `Pensa que é caro? Tô 35% mais barata e 100% mais safad4 agora. Aproveita antes que eu mude de ideia. 🔥`,
+      buttons: [
+        { id: 1, text: 'MENSAL + 🎁 por R$ 12.93 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DIA NO PARAISO 😈 por R$ 6.44 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
     {
       name: 'Recuperação: Cerveja no Bar (30% OFF 🍺💦)',
       category: 'Recuperação Hot 🔥',
@@ -198,6 +224,32 @@ const TEMPLATES_BY_LANG: Record<LanguageCode, StrategyTemplate[]> = {
   en: [
     // --- ENGLISH RECOVERY & HIGH CONVERSION STRATEGIES ---
     {
+      name: '🔥 Last Chance ($2.50 Lifetime + Video Call)',
+      category: 'Recuperação Hot 🔥',
+      text: `🔥 LAST CHANCE — $2.50 LIFETIME + PRIVATE VIDEO CALL\n\nYou already know I look innocent but not quite... and I can show you every inch on a private video call lol. 😈\n\n⌛ This offer disappears shortly.\n👇 Join now for $2.50`,
+      buttons: [
+        { id: 1, text: 'LIFETIME + 🎁 for $2.50', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+      ],
+    },
+    {
+      name: '🥺 Vulnerability & Real Story (60% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `Alright... let me tell you everything 😔\n\nI really need help this month\nTuition is past due, rent on the edge, bills piling up...\nThis private club is all I have right now to keep going\nI dropped my price to the absolute rock bottom\n\nIf you really can't join now, I understand...\nBut if you can, could you help me out? 🥺\nI promise you won't regret it 😈 👇`,
+      buttons: [
+        { id: 1, text: 'MONTHLY + 🎁 for $1.99 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DAY IN PARADISE 😈 for $0.99 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
+    {
+      name: '🔥 Wild Uncensored Teaser (35% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `Think it's expensive? I'm 35% cheaper and 100% naughtier right now. Take advantage before I change my mind. 🔥`,
+      buttons: [
+        { id: 1, text: 'MONTHLY + 🎁 for $3.25 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DAY IN PARADISE 😈 for $1.60 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
+    {
       name: 'Recovery: Cheaper than a Beer (30% OFF 🍺💦)',
       category: 'Recuperação Hot 🔥',
       text: `Afraid of paying too much? 30% OFF = you spend less than a beer at the bar and get my p*ssy rolling its eyes right on your phone screen. 🍺➡️💦`,
@@ -323,6 +375,32 @@ const TEMPLATES_BY_LANG: Record<LanguageCode, StrategyTemplate[]> = {
   ],
   es: [
     // --- ESPAÑOL RECUPERACIÓN & MODELOS DE CONVERSIÓN ---
+    {
+      name: '🔥 Última Oportunidad ($2.50 Vitalicio + Videollamada)',
+      category: 'Recuperação Hot 🔥',
+      text: `🔥 ÚLTIMA OPORTUNIDAD — $2.50 VITALICIO + VIDEOLLAMADA\n\nYa sabes que tengo cara de santa pero no tanto... y te lo puedo mostrar todito en una videollamada privada jeje. 😈\n\n⌛ Esta oportunidad se acaba en breve.\n👇 Entra ahora por $2.50`,
+      buttons: [
+        { id: 1, text: 'VITALICIO + 🎁 por $2.50', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+      ],
+    },
+    {
+      name: '🥺 Desahogo & Vulnerabilidad (60% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `Está bien... te voy a contar todo 😔\n\nDe verdad necesito ayuda este mes\nLa universidad vencida, el arriendo al límite, deudas acumulándose...\nEste club privado es todo lo que tengo para sostenerme\nPuse el precio más bajo posible\n\nSi no puedes entrar ahora, lo entiendo...\n¿Pero si puedes, me ayudas? 🥺\nTe prometo que no te vas a arrepentir 😈 👇`,
+      buttons: [
+        { id: 1, text: 'MENSUAL + 🎁 por $1.99 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DÍA EN EL PARAÍSO 😈 por $0.99 (60% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
+    {
+      name: '🔥 Teaser Atrevida Sin Censura (35% OFF)',
+      category: 'Recuperação Hot 🔥',
+      text: `¿Crees que es caro? Estoy 35% más barata y 100% más atrevida ahora. Aprovecha antes de que cambie de idea. 🔥`,
+      buttons: [
+        { id: 1, text: 'MENSUAL + 🎁 por $3.25 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 0 },
+        { id: 2, text: '1 DÍA EN EL PARAÍSO 😈 por $1.60 (35% OFF)', url: 'https://syncpayments.com.br', color: 'green', row: 1 },
+      ],
+    },
     {
       name: 'Recuperación: Más Barato que Cerveza (30% OFF 🍺💦)',
       category: 'Recuperação Hot 🔥',

@@ -314,16 +314,15 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
     tag: string;
     discount?: string;
     mediaType?: 'photo' | 'video' | 'audio';
+    mediaUrl?: string;
     buttons: Array<{ text: string; iconType?: 'sparkles' | 'flame' | 'card' | 'send'; primary?: boolean }>;
   }>({
-    title: 'Modelo 1: 30% OFF (Cerveja no Bar)',
-    body: 'Tá com medo de pagar caro? 30% OFF = você gasta menos que uma cerveja no bar e ainda leva minha buc3t4 virando o olho na tela do celular. 🍺➡️💦',
-    tag: 'recupera_30off',
-    discount: '30% OFF',
-    mediaType: 'video',
+    title: 'Modelo 1: ÚLTIMA CHANCE (R$ 9,90 Vitalício + Chamada)',
+    body: `🔥 ÚLTIMA CHANCE — R$ 9,90 VITALÍCIO + CHAMADA DE VIDEO\n\nVocê já sabe que sou santinha mas nem tanto... e eu posso te mostrar tudinho em uma video chamada rs. 😈\n\n⌛ Essa chance some em breve.\n👇 Entra agora por R$ 9,90`,
+    tag: 'recupera_vitalicio990',
+    discount: 'R$ 9,90',
     buttons: [
-      { text: 'MENSAL + BÔNUS por R$ 13.93 (30% OFF)', iconType: 'sparkles', primary: true },
-      { text: '1 DIA NO PARAÍSO por R$ 6.93 (30% OFF)', iconType: 'flame', primary: false },
+      { text: 'VITALÍCIO + 🎁 por R$ 9.90', iconType: 'sparkles', primary: true },
     ],
   });
 
@@ -343,11 +342,13 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
     duration: string;
     price: string;
     buttonColor: 'emerald' | 'lime' | 'purple' | 'rose' | 'blue' | 'amber';
+    paymentImageUrl: string;
   }>({
     name: '1 Mês VIP Completo',
     duration: '30 dias',
     price: '19,90',
     buttonColor: 'emerald',
+    paymentImageUrl: '',
   });
 
   // Estados de Mídias do Funil de Upsell
@@ -662,6 +663,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
       duration: '30 dias',
       price: '19,90',
       buttonColor: 'emerald',
+      paymentImageUrl: '',
     });
     setPlanModalOpen(true);
   };
@@ -674,6 +676,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
       duration: prod.duration || '30 dias',
       price: precoFormatado,
       buttonColor: (prod.buttonColor as any) || 'emerald',
+      paymentImageUrl: (prod as any).paymentImageUrl || '',
     });
     setPlanModalOpen(true);
   };
@@ -700,6 +703,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
           buttonColor: planForm.buttonColor,
           priceCents,
           botId: openBot?.id || null,
+          paymentImageUrl: planForm.paymentImageUrl.trim() || null,
         });
         notify('success', 'Plano Atualizado', 'Plano e sincronização com a SyncPay atualizados!');
       } else {
@@ -709,6 +713,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
           buttonColor: planForm.buttonColor,
           priceCents,
           botId: openBot?.id || null,
+          paymentImageUrl: planForm.paymentImageUrl.trim() || null,
           active: true,
         });
         notify('success', 'Plano Criado com Sucesso!', 'Plano sincronizado e pronto para gerar PIX automático.');
@@ -2403,38 +2408,37 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {/* Modelo 1: 30% OFF (Sensorial & Desejo) */}
+                    {/* Modelo 1: Última Chance — R$ 9,90 Vitalício + Chamada de Vídeo */}
                     <div
                       onClick={() =>
                         setActivePreviewCopy({
-                          title: 'Modelo 1: 30% OFF (Cerveja no Bar)',
-                          body: 'Tá com medo de pagar caro? 30% OFF = você gasta menos que uma cerveja no bar e ainda leva minha buc3t4 virando o olho na tela do celular. 🍺➡️💦',
-                          tag: 'recupera_30off',
-                          discount: '30% OFF',
-                          mediaType: 'video',
+                          title: 'Modelo 1: ÚLTIMA CHANCE (R$ 9,90 Vitalício + Chamada)',
+                          body: '🔥 ÚLTIMA CHANCE — R$ 9,90 VITALÍCIO + CHAMADA DE VIDEO\n\nVocê já sabe que sou santinha mas nem tanto... e eu posso te mostrar tudinho em uma video chamada rs. 😈\n\n⌛ Essa chance some em breve.\n👇 Entra agora por R$ 9,90',
+                          tag: 'recupera_vitalicio990',
+                          discount: 'R$ 9,90',
+                          mediaType: 'photo',
                           buttons: [
-                            { text: 'MENSAL + BÔNUS por R$ 13.93 (30% OFF)', iconType: 'sparkles', primary: true },
-                            { text: '1 DIA NO PARAÍSO por R$ 6.93 (30% OFF)', iconType: 'flame', primary: false },
+                            { text: 'VITALÍCIO + 🎁 por R$ 9.90', iconType: 'sparkles', primary: true },
                           ],
                         })
                       }
                       className="space-y-2.5 rounded-xl border border-[#1b2f24] bg-[#07120c] p-3.5 cursor-pointer hover:border-emerald-500/40 transition"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">Modelo 1: 30% OFF (Cerveja no Bar)</span>
-                        <span className="inline-flex items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300">
-                          <Flame className="h-3 w-3 text-emerald-400" /> Campeão de Vendas
+                        <span className="text-xs font-bold text-white">Modelo 1: R$ 9,90 Vitalício + Chamada</span>
+                        <span className="inline-flex items-center gap-1 rounded bg-rose-500/20 px-2 py-0.5 text-[9px] font-bold text-rose-300">
+                          <Flame className="h-3 w-3 text-rose-400" /> Última Chance
                         </span>
                       </div>
-                      <div className="rounded-xl border border-emerald-500/20 bg-[#0a1710] p-3 text-xs leading-relaxed text-[#c2dfd1]">
-                        Tá com medo de pagar caro? 30% OFF = você gasta menos que uma cerveja no bar e ainda leva minha buc3t4 virando o olho na tela do celular. 🍺➡️💦
+                      <div className="rounded-xl border border-emerald-500/20 bg-[#0a1710] p-3 text-xs leading-relaxed text-[#c2dfd1] whitespace-pre-line">
+                        🔥 <strong>ÚLTIMA CHANCE — R$ 9,90 VITALÍCIO + CHAMADA DE VIDEO</strong>{'\n\n'}
+                        Você já sabe que sou santinha mas nem tanto... e eu posso te mostrar tudinho em uma video chamada rs. 😈{'\n\n'}
+                        ⌛ Essa chance some em breve.{'\n'}
+                        👇 Entra agora por R$ 9,90
                       </div>
                       <div className="space-y-1.5 pt-1">
                         <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> MENSAL + BÔNUS por R$ 13.93 (30% OFF)
-                        </div>
-                        <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Flame className="h-3.5 w-3.5 text-rose-300" /> 1 DIA NO PARAÍSO por R$ 6.93 (30% OFF)
+                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> VITALÍCIO + 🎁 por R$ 9.90
                         </div>
                       </div>
                       <button
@@ -2442,7 +2446,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           void navigator.clipboard.writeText(
-                            'Tá com medo de pagar caro? 30% OFF = você gasta menos que uma cerveja no bar e ainda leva minha buc3t4 virando o olho na tela do celular. 🍺➡️💦'
+                            '🔥 ÚLTIMA CHANCE — R$ 9,90 VITALÍCIO + CHAMADA DE VIDEO\n\nVocê já sabe que sou santinha mas nem tanto... e eu posso te mostrar tudinho em uma video chamada rs. 😈\n\n⌛ Essa chance some em breve.\n👇 Entra agora por R$ 9,90'
                           );
                           notify('success', 'Copy Copiado!', 'Texto de recuperação copiado para a área de transferência.');
                         }}
@@ -2452,38 +2456,45 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                       </button>
                     </div>
 
-                    {/* Modelo 2: 25% OFF (Barulho Molhado & WhatsApp) */}
+                    {/* Modelo 2: Desabafo & Vulnerabilidade (60% OFF) */}
                     <div
                       onClick={() =>
                         setActivePreviewCopy({
-                          title: 'Modelo 2: 25% OFF (Áudio Molhado)',
-                          body: 'Quer ouvir o barulho molhado? Eu gravei o som da minha buc3t4 sendo lambida com a língua dele (meu dedo). 25% OFF e você recebe o audio e o video no WhatsApp agora...',
-                          tag: 'recupera_25off',
-                          discount: '25% OFF',
-                          mediaType: 'audio',
+                          title: 'Modelo 2: Desabafo & Vulnerabilidade (60% OFF)',
+                          body: 'Tá bom... vou te contar tudo 😔\n\nTô precisando muito esse mês\nFaculdade atrasada, aluguel no limite, contas acumulando...\nEsse clubinho é tudo que tenho pra me manter\nColoquei o menor preço possível\n\nSe não der pra entrar agora, entendo...\nMas se der, me ajuda? 🥺\nTe prometo que não vai se arrepender 😈 👇',
+                          tag: 'recupera_desabafo60',
+                          discount: '60% OFF',
+                          mediaType: 'photo',
                           buttons: [
-                            { text: 'MENSAL + BÔNUS por R$ 14.93 (25% OFF)', iconType: 'sparkles', primary: true },
-                            { text: '1 DIA NO PARAÍSO por R$ 7.43 (25% OFF)', iconType: 'flame', primary: false },
+                            { text: 'MENSAL + 🎁 por R$ 7.96 (60% OFF)', iconType: 'sparkles', primary: true },
+                            { text: '1 DIA NO PARAISO 😈 por R$ 3.96 (60% OFF)', iconType: 'flame', primary: false },
                           ],
                         })
                       }
                       className="space-y-2.5 rounded-xl border border-[#1b2f24] bg-[#07120c] p-3.5 cursor-pointer hover:border-emerald-500/40 transition"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">Modelo 2: 25% OFF (Áudio Molhado)</span>
+                        <span className="text-xs font-bold text-white">Modelo 2: Vulnerabilidade & Ajuda (60% OFF)</span>
                         <span className="inline-flex items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300">
                           <Sparkles className="h-3 w-3 text-emerald-400" /> Alta Conversão
                         </span>
                       </div>
-                      <div className="rounded-xl border border-emerald-500/20 bg-[#0a1710] p-3 text-xs leading-relaxed text-[#c2dfd1]">
-                        Quer ouvir o barulho molhado? Eu gravei o som da minha buc3t4 sendo lambida com a língua dele (meu dedo). 25% OFF e você recebe o audio e o video no WhatsApp agora...
+                      <div className="rounded-xl border border-emerald-500/20 bg-[#0a1710] p-3 text-xs leading-relaxed text-[#c2dfd1] whitespace-pre-line">
+                        Tá bom... vou te contar tudo 😔{'\n'}
+                        Tô precisando muito esse mês{'\n'}
+                        Faculdade atrasada, aluguel no limite, contas acumulando...{'\n'}
+                        Esse clubinho é tudo que tenho pra me manter{'\n'}
+                        Coloquei o menor preço possível{'\n\n'}
+                        Se não der pra entrar agora, entendo...{'\n'}
+                        Mas se der, me ajuda? 🥺{'\n'}
+                        Te prometo que não vai se arrepender 😈 👇
                       </div>
                       <div className="space-y-1.5 pt-1">
                         <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> MENSAL + BÔNUS por R$ 14.93 (25% OFF)
+                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> MENSAL + 🎁 por R$ 7.96 (60% OFF)
                         </div>
                         <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Flame className="h-3.5 w-3.5 text-rose-300" /> 1 DIA NO PARAÍSO por R$ 7.43 (25% OFF)
+                          <Flame className="h-3.5 w-3.5 text-rose-300" /> 1 DIA NO PARAISO 😈 por R$ 3.96 (60% OFF)
                         </div>
                       </div>
                       <button
@@ -2491,7 +2502,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           void navigator.clipboard.writeText(
-                            'Quer ouvir o barulho molhado? Eu gravei o som da minha buc3t4 sendo lambida com a língua dele (meu dedo). 25% OFF e você recebe o audio e o video no WhatsApp agora...'
+                            'Tá bom... vou te contar tudo 😔\n\nTô precisando muito esse mês\nFaculdade atrasada, aluguel no limite, contas acumulando...\nEsse clubinho é tudo que tenho pra me manter\nColoquei o menor preço possível\n\nSe não der pra entrar agora, entendo...\nMas se der, me ajuda? 🥺\nTe prometo que não vai se arrepender 😈 👇'
                           );
                           notify('success', 'Copy Copiado!', 'Texto de recuperação copiado para a área de transferência.');
                         }}
@@ -2501,38 +2512,39 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                       </button>
                     </div>
 
-                    {/* Modelo 3: 40% OFF (Escassez Relâmpago) */}
+                    {/* Modelo 3: Teaser Safada Sem Tarja (35% OFF) */}
                     <div
                       onClick={() =>
                         setActivePreviewCopy({
-                          title: 'Modelo 3: 40% OFF (Última Chamada)',
-                          body: 'Sumiu vida? O sistema vai cancelar seu acesso promocional... Liberei 40% OFF só até a meia-noite pra você ver meus vídeos pelada e me mandar direct na hora. ⏳🥵',
-                          tag: 'recupera_40off',
-                          discount: '40% OFF',
-                          mediaType: 'photo',
+                          title: 'Modelo 3: Teaser Safada Sem Tarja (35% OFF)',
+                          body: 'Pensa que é caro? Tô 35% mais barata e 100% mais safad4 agora. Aproveita antes que eu mude de ideia. 🔥',
+                          tag: 'recupera_safada35',
+                          discount: '35% OFF',
+                          mediaType: 'video',
+                          mediaUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
                           buttons: [
-                            { text: 'MENSAL + BÔNUS por R$ 11.90 (40% OFF)', iconType: 'sparkles', primary: true },
-                            { text: '1 DIA NO PARAÍSO por R$ 5.90 (40% OFF)', iconType: 'flame', primary: false },
+                            { text: 'MENSAL + 🎁 por R$ 12.93 (35% OFF)', iconType: 'sparkles', primary: true },
+                            { text: '1 DIA NO PARAISO 😈 por R$ 6.44 (35% OFF)', iconType: 'flame', primary: false },
                           ],
                         })
                       }
                       className="space-y-2.5 rounded-xl border border-[#1b2f24] bg-[#07120c] p-3.5 cursor-pointer hover:border-emerald-500/40 transition"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">Modelo 3: 40% OFF (Última Chamada)</span>
+                        <span className="text-xs font-bold text-white">Modelo 3: Teaser Sem Tarja (35% OFF)</span>
                         <span className="inline-flex items-center gap-1 rounded bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-300">
-                          <Clock className="h-3 w-3 text-amber-400" /> Escassez Relâmpago
+                          <Film className="h-3 w-3 text-amber-400" /> Vídeo / Teaser
                         </span>
                       </div>
                       <div className="rounded-xl border border-emerald-500/20 bg-[#0a1710] p-3 text-xs leading-relaxed text-[#c2dfd1]">
-                        Sumiu vida? O sistema vai cancelar seu acesso promocional... Liberei 40% OFF só até a meia-noite pra você ver meus vídeos pelada e me mandar direct na hora. ⏳🥵
+                        Pensa que é caro? Tô 35% mais barata e 100% mais safad4 agora. Aproveita antes que eu mude de ideia. 🔥
                       </div>
                       <div className="space-y-1.5 pt-1">
                         <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> MENSAL + BÔNUS por R$ 11.90 (40% OFF)
+                          <Sparkles className="h-3.5 w-3.5 text-[#d4f933]" /> MENSAL + 🎁 por R$ 12.93 (35% OFF)
                         </div>
                         <div className="flex items-center justify-center gap-1.5 rounded-lg bg-[#2e6d30] py-2 text-xs font-bold text-white shadow">
-                          <Flame className="h-3.5 w-3.5 text-rose-300" /> 1 DIA NO PARAÍSO por R$ 5.90 (40% OFF)
+                          <Flame className="h-3.5 w-3.5 text-rose-300" /> 1 DIA NO PARAISO 😈 por R$ 6.44 (35% OFF)
                         </div>
                       </div>
                       <button
@@ -2540,7 +2552,7 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           void navigator.clipboard.writeText(
-                            'Sumiu vida? O sistema vai cancelar seu acesso promocional... Liberei 40% OFF só até a meia-noite pra você ver meus vídeos pelada e me mandar direct na hora. ⏳🥵'
+                            'Pensa que é caro? Tô 35% mais barata e 100% mais safad4 agora. Aproveita antes que eu mude de ideia. 🔥'
                           );
                           notify('success', 'Copy Copiado!', 'Texto de recuperação copiado.');
                         }}
@@ -2723,6 +2735,30 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                             </span>
                             <span className="text-[10px] text-[#557062]">14:38</span>
                           </div>
+
+                          {/* Mídia do Telegram se houver */}
+                          {activePreviewCopy.mediaUrl && (
+                            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black aspect-[9/12] max-h-72">
+                              <img
+                                src={activePreviewCopy.mediaUrl}
+                                alt="Mídia Preview"
+                                className="w-full h-full object-cover filter blur-[2px]"
+                              />
+                              {activePreviewCopy.mediaType === 'video' && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30">
+                                  <div className="h-11 w-11 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-xl">
+                                    <Play className="h-5 w-5 fill-white ml-0.5" />
+                                  </div>
+                                  <span className="absolute top-2.5 left-2.5 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-mono text-white flex items-center gap-1">
+                                    <Clock className="h-2.5 w-2.5" /> 00:04
+                                  </span>
+                                  <span className="absolute bottom-2.5 left-2.5 rounded-full bg-rose-600/90 px-2.5 py-0.5 text-[9px] font-bold text-white shadow">
+                                    🔞 100% SEM TARJA NO VIP
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
 
                           <div className="rounded-2xl rounded-tl-sm border border-[#1f382a] bg-[#0c1f15] p-3 text-xs leading-relaxed text-[#d7ede2] whitespace-pre-line shadow">
                             {activePreviewCopy.body}
@@ -3256,6 +3292,23 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                                 ? 'Copia el código abajo o escanea con tu app bancaria. La entrega es inmediata con SyncPay:'
                                 : 'Copie a chave PIX abaixo ou aponte a câmera do seu banco. A liberação do Canal VIP é 100% instantânea via SyncPay:'}
                             </p>
+
+                            {/* Imagem / Banner do Pagamento do Plano se configurado */}
+                            {(() => {
+                              const selectedPlan = state.products.find((p) => p.id === simSelectedPlanId);
+                              if (selectedPlan?.paymentImageUrl) {
+                                return (
+                                  <div className="overflow-hidden rounded-xl border border-emerald-500/30">
+                                    <img
+                                      src={selectedPlan.paymentImageUrl}
+                                      alt="Banner do Pagamento PIX"
+                                      className="w-full h-32 object-cover"
+                                    />
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
 
                             {/* Caixa do Código PIX Copia e Cola */}
                             <div className="rounded-xl border border-emerald-500/30 bg-[#0c181b] p-2 space-y-1.5">
@@ -3858,6 +3911,35 @@ export function Bots({ state, refresh, onNavigate }: BotsProps) {
                 </div>
               );
             })()}
+          </div>
+
+          {/* Imagem / Banner da Mensagem do PIX */}
+          <div className="space-y-2 rounded-xl border border-white/10 bg-[#0a0d13] p-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                <ImageIcon className="h-3.5 w-3.5 text-[#d4f933]" />
+                Imagem / Banner da Mensagem de Pagamento PIX (Opcional)
+              </label>
+              {planForm.paymentImageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setPlanForm({ ...planForm, paymentImageUrl: '' })}
+                  className="text-[10px] text-rose-400 hover:text-rose-300 font-medium"
+                >
+                  Remover imagem
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-[#79889f] leading-relaxed">
+              Anexe uma foto, flyer ou arte personalizada. Ela será enviada no Telegram com a legenda do PIX Copia e Cola assim que o lead escolher este plano.
+            </p>
+            <SmartImageInput
+              label=""
+              value={planForm.paymentImageUrl}
+              onChange={(val) => setPlanForm({ ...planForm, paymentImageUrl: val })}
+              placeholder="Cole imagem (Ctrl+V), arraste ou insira URL..."
+              aspectHint="Banner ou foto que acompanha a chave PIX no Telegram"
+            />
           </div>
 
           {/* Aviso Informativo da Sincronização SyncPay */}

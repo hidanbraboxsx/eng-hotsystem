@@ -447,6 +447,7 @@ export function registerAdminRoutes(app: Express): void {
     pixCode: z.string().trim().max(1_500).nullable().optional(),
     checkoutUrl: z.string().trim().url().nullable().optional(),
     deliveryText: z.string().trim().max(4_096).optional(),
+    paymentImageUrl: z.string().trim().nullable().optional(),
     active: z.boolean().optional(),
   });
 
@@ -466,6 +467,7 @@ export function registerAdminRoutes(app: Express): void {
       pixCode: parsed.data.pixCode || null,
       checkoutUrl: parsed.data.checkoutUrl || null,
       deliveryText: parsed.data.deliveryText || '',
+      paymentImageUrl: parsed.data.paymentImageUrl || null,
       active: parsed.data.active !== false,
       createdAt: now,
       updatedAt: now,

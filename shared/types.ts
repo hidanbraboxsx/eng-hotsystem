@@ -244,6 +244,7 @@ export interface Product {
   pixCode: string | null;
   checkoutUrl: string | null;
   deliveryText: string;
+  paymentImageUrl?: string | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -518,6 +519,7 @@ export interface CreateProductInput {
   pixCode?: string | null;
   checkoutUrl?: string | null;
   deliveryText?: string;
+  paymentImageUrl?: string | null;
   active?: boolean;
 }
 
